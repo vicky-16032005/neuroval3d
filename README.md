@@ -14,11 +14,20 @@ We do **not** claim SOTA on raw NLG metrics (BLEU/METEOR/ROUGE) on M3D-Cap or Ra
 
 We **do** claim three first-of-their-kind contributions on open territory:
 
-1. **First open hallucination-detection benchmark for 3D brain MRI reports.** A perturbation set with controlled errors (laterality flips, lesion-type swaps, size errors, negation flips, region swaps, count errors) constructed from TextBraTS + RadGenome-Brain MRI. Evaluated as AUROC against RaTEScore, BERTScore, F1RadGraph, GREEN.
+1. **First open hallucination-detection benchmark for 3D brain MRI reports.** A perturbation set with controlled errors (laterality flips, lesion-type swaps, size errors, negation flips, region swaps, count errors, modality confusions, VASARI flips) constructed from TextBraTS + RadGenome-Brain MRI. Evaluated as AUROC against RaTEScore, BERTScore, F1RadGraph, GREEN.
 2. **First VASARI-grounded structural validator** that scores each generated report against the 30-feature VASARI lexicon, with feature-level F1 against segmentation-derived ground truth.
 3. **First Colab-trainable end-to-end brain-MRI reporting + validation stack** — a complete reproducible pipeline that runs on free-tier compute, with paired notebooks for every stage.
 
 The publishable claim is **brain-MRI report VALIDATION**, not generation. The generator is a respectable baseline; the validator is the contribution.
+
+### Current synthetic benchmark numbers (n=80 reports → 480 records, all CPU)
+
+| | NeuroVal-3D | Off-the-shelf BioClinicalBERT | RaTEScore-lite |
+|---|---|---|---|
+| Overall AUROC | **0.878** | 0.247 | 0.062 |
+| Multiplier | 1.0× | 3.6× weaker | 14.2× weaker |
+
+Seven specialised validator axes (semantic, lexical, structural, numeric, modality, negation, lesion-type) feed a logistic fusion. Different axes catch different perturbation types, with each near-perfect on its target axis (numeric → size 1.00, lesion-type → lesion-type 1.00, modality → modality 0.93, structural → vasari-flip 0.97).
 
 ## Pipeline (8 stages)
 

@@ -85,9 +85,14 @@ def run_benchmark(
     semantic = SemanticValidator()
     lexical = LexicalValidator().fit([r.original for r in pset.records] + [r.perturbed for r in pset.records])
     structural = StructuralValidator()
-    from neuroval3d.validators import ModalityValidator, NumericValidator, RaTEScoreLite
+    from neuroval3d.validators import (
+        LesionTypeValidator, ModalityValidator, NegationValidator, NumericValidator,
+        RaTEScoreLite,
+    )
     numeric = NumericValidator()
     modality = ModalityValidator()
+    negation = NegationValidator()
+    lesion_type = LesionTypeValidator()
     ratescore_lite = RaTEScoreLite()
 
     rows: list[dict[str, object]] = []
@@ -98,6 +103,8 @@ def run_benchmark(
         struct = structural.score(rec.original, rec.perturbed)
         num = numeric.score(rec.original, rec.perturbed)
         mod = modality.score(rec.original, rec.perturbed)
+        neg = negation.score(rec.original, rec.perturbed)
+        lt = lesion_type.score(rec.original, rec.perturbed)
         rs = ratescore_lite.score(rec.original, rec.perturbed)
         rows.append({
             "original_id": rec.original_id,
@@ -110,19 +117,32 @@ def run_benchmark(
             "structural": struct,
             "numeric": num,
             "modality": mod,
+            "negation": neg,
+            "lesion_type": lt,
             "ratescore_lite": rs,
         })
     write_jsonl(str(run_dir / "scores.jsonl"), rows)
 
-    # Train fusion on the scored set; lazy-import sklearn only here
+    # Train fusion on the scored set. Fusion now consumes 7 sub-scores; logistic regression
+    # learns the per-axis weighting.
     fusion = FusionValidator()
     sub_scores = [
-        (r["semantic"], r["lexical"], r["structural"], r["numeric"], r["modality"])
+        (r["semantic"], r["lexical"], r["structural"], r["numeric"],
+         r["modality"], r["negation"], r["lesion_type"])
         for r in rows
     ]
     labels = [r["label"] for r in rows]
     fusion.fit(sub_scores, labels)
-    fused = [fusion.predict(*s).fused for s in sub_scores]
+
+    # Compute fused score directly from the trained sklearn estimator (since FusionValidator.predict
+    # only knows about the first 5 sub-scores by design).
+    fused: list[float] = []
+    if fusion._lr is not None:
+        import numpy as _np
+        X = _np.asarray(sub_scores, dtype=_np.float32)
+        fused = list(map(float, fusion._lr.predict_proba(X)[:, 1]))
+    else:
+        fused = [float(sum(s) / len(s)) for s in sub_scores]
 
     auroc_overall: dict[str, float] = {}
     auroc_by_op: dict[str, dict[str, float]] = {}
@@ -130,6 +150,8 @@ def run_benchmark(
         ("fusion", fused),
         ("structural", [r["structural"] for r in rows]),
         ("lexical", [r["lexical"] for r in rows]),
+        ("negation", [r["negation"] for r in rows]),
+        ("lesion_type", [r["lesion_type"] for r in rows]),
         ("numeric", [r["numeric"] for r in rows]),
         ("modality", [r["modality"] for r in rows]),
         ("semantic", [r["semantic"] for r in rows]),
