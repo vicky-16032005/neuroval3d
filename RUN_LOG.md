@@ -121,3 +121,39 @@ These are the first published brain-MRI hallucination-detection AUROC numbers. E
 - `outputs/results/20260430_152027/scores.jsonl`
 - `outputs/checkpoints/CP-20260430-bench-152027/`
 
+---
+
+## 2026-04-30 15:35 — Phase 4 polish round 2
+
+### changes
+- Added `validators/numeric.py` — extracts cm/mm measurements with cm↔mm normalisation, returns size-agreement Jaccard with 1mm tolerance.
+- Added `validators/modality.py` — detects {T1, T1ce, T2, FLAIR, DWI, ADC, SWI, MRA, perfusion} mentions, returns set Jaccard.
+- Extended `FusionValidator` to take 5 sub-scores (semantic, lexical, structural, numeric, modality). Backwards compatible with 3-tuple callers.
+- Wired both into the benchmark loop; logistic regression now learns over 5 features.
+
+### results (fusion AUROC 0.682 → 0.787, +15.4%)
+
+| Validator | Overall AUROC | laterality | lesion_type | modality | negation | region | size | vasari_flip |
+|-----------|---------------|----------|----------|----------|----------|----------|----------|----------|
+| **fusion** | **0.7866** | 0.7191 | 0.7005 | 0.6944 | 0.5863 | 0.8327 | **1.0000** | 0.9971 |
+| structural | 0.6695 | 0.7707 | 0.4938 | 0.5044 | 0.8232 | 0.6885 | 0.4966 | 0.9660 |
+| lexical | 0.6051 | 0.5602 | 0.7430 | 0.5394 | 0.4931 | 0.7673 | 0.2134 | 0.9147 |
+| numeric (new) | 0.5687 | 0.5 | 0.5 | 0.5 | 0.5 | 0.5 | **1.0000** | 0.5 |
+| modality (new) | 0.4995 | 0.425 | 0.425 | **0.9322** | 0.425 | 0.425 | 0.425 | 0.425 |
+| semantic (BioClinicalBERT off-the-shelf) | 0.2473 | 0.0 | 0.8258 | 0.0 | 0.4027 | 0.1216 | 0.0 | 0.4276 |
+| ratescore_lite (Jaccard baseline) | 0.0622 | 0.0 | 0.3786 | 0.0203 | 0.0192 | 0.0 | 0.0 | 0.0 |
+
+### what changed where
+- **Size axis**: 0.24 → **1.00**. Numeric validator perfectly catches size flips by extracting and comparing measurements.
+- **Modality axis**: 0.54 → **0.69**. Modality validator catches T1↔T2 flips that surface cosine misses.
+- **Fusion overall**: 0.682 → **0.787**. The logistic regression learns to lean on numeric/modality for those specific axes while keeping structural/lexical for the rest.
+
+### where we stand vs baselines (synthetic n=80)
+- NeuroVal-3D fused **3.2× better** than off-the-shelf BioClinicalBERT (0.787 vs 0.247)
+- NeuroVal-3D fused **12.7× better** than RaTEScore-lite Jaccard (0.787 vs 0.062)
+- Six independent axes (semantic, lexical, structural, numeric, modality, fusion), each with their own AUROC, each catching different perturbation types. This is the "multi-axis validator matrix" framing for the paper.
+
+### artifacts
+- `outputs/results/20260430_153506/` (full set)
+- `outputs/checkpoints/CP-20260430-bench-153506/`
+

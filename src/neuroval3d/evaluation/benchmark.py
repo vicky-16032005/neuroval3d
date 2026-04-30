@@ -85,9 +85,9 @@ def run_benchmark(
     semantic = SemanticValidator()
     lexical = LexicalValidator().fit([r.original for r in pset.records] + [r.perturbed for r in pset.records])
     structural = StructuralValidator()
-
-    # Baselines: ratescore-lite is always cheap; bertscore is opt-in.
-    from neuroval3d.validators import RaTEScoreLite
+    from neuroval3d.validators import ModalityValidator, NumericValidator, RaTEScoreLite
+    numeric = NumericValidator()
+    modality = ModalityValidator()
     ratescore_lite = RaTEScoreLite()
 
     rows: list[dict[str, object]] = []
@@ -96,6 +96,8 @@ def run_benchmark(
         sem = semantic.score(rec.original, rec.perturbed)
         lex = lexical.score(rec.original, rec.perturbed)
         struct = structural.score(rec.original, rec.perturbed)
+        num = numeric.score(rec.original, rec.perturbed)
+        mod = modality.score(rec.original, rec.perturbed)
         rs = ratescore_lite.score(rec.original, rec.perturbed)
         rows.append({
             "original_id": rec.original_id,
@@ -106,13 +108,18 @@ def run_benchmark(
             "semantic": sem,
             "lexical": lex,
             "structural": struct,
+            "numeric": num,
+            "modality": mod,
             "ratescore_lite": rs,
         })
     write_jsonl(str(run_dir / "scores.jsonl"), rows)
 
     # Train fusion on the scored set; lazy-import sklearn only here
     fusion = FusionValidator()
-    sub_scores = [(r["semantic"], r["lexical"], r["structural"]) for r in rows]
+    sub_scores = [
+        (r["semantic"], r["lexical"], r["structural"], r["numeric"], r["modality"])
+        for r in rows
+    ]
     labels = [r["label"] for r in rows]
     fusion.fit(sub_scores, labels)
     fused = [fusion.predict(*s).fused for s in sub_scores]
@@ -120,10 +127,12 @@ def run_benchmark(
     auroc_overall: dict[str, float] = {}
     auroc_by_op: dict[str, dict[str, float]] = {}
     for name, scores in [
-        ("semantic", [r["semantic"] for r in rows]),
-        ("lexical", [r["lexical"] for r in rows]),
-        ("structural", [r["structural"] for r in rows]),
         ("fusion", fused),
+        ("structural", [r["structural"] for r in rows]),
+        ("lexical", [r["lexical"] for r in rows]),
+        ("numeric", [r["numeric"] for r in rows]),
+        ("modality", [r["modality"] for r in rows]),
+        ("semantic", [r["semantic"] for r in rows]),
         ("ratescore_lite (baseline)", [r["ratescore_lite"] for r in rows]),
     ]:
         auroc_overall[name] = _auroc(labels, scores)
