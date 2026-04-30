@@ -245,7 +245,7 @@ CELLS = [
         "    axes[1, i].imshow(vol[i, :, H // 2, :], cmap=\"gray\", aspect=\"auto\")\n"
         "    axes[1, i].set_title(f\"{m} — coronal\")\n"
         "    axes[1, i].axis(\"off\")\n"
-        "fig.suptitle(f\"Stage 1 preprocessing output — {subject}\")\n"
+        "fig.suptitle(f\"Stage 1 preprocessing output \\u2014 {subject_id}\")\n"
         "plt.tight_layout()\n"
         "plt.savefig(\"/kaggle/working/preprocessing_triptych.png\", dpi=120, bbox_inches=\"tight\")\n"
         "plt.show()\n"
