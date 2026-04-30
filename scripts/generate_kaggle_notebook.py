@@ -81,14 +81,24 @@ CELLS = [
     ),
     code(
         "# Sanity check imports + GPU\n"
-        "import torch, sys\n"
+        "import sys, torch, importlib\n"
         "print(f\"python: {sys.version.split()[0]}\")\n"
         "print(f\"torch:  {torch.__version__}, cuda available: {torch.cuda.is_available()}\")\n"
         "if torch.cuda.is_available():\n"
         "    print(f\"  device: {torch.cuda.get_device_name(0)}, vram: {torch.cuda.get_device_properties(0).total_memory/1e9:.1f} GB\")\n"
         "\n"
+        "# Some Kaggle environments resolve `neuroval3d` to an empty namespace package despite\n"
+        "# the editable install succeeding. Force-prepend our src/ to sys.path and drop any\n"
+        "# stale module cache before the first real import.\n"
+        "_PROJECT_SRC = \"/kaggle/working/neuroval3d/src\"\n"
+        "if _PROJECT_SRC not in sys.path:\n"
+        "    sys.path.insert(0, _PROJECT_SRC)\n"
+        "for _m in list(sys.modules):\n"
+        "    if _m == \"neuroval3d\" or _m.startswith(\"neuroval3d.\"):\n"
+        "        del sys.modules[_m]\n"
+        "\n"
         "import neuroval3d\n"
-        "print(f\"neuroval3d: v{neuroval3d.__version__}\")\n"
+        "print(f\"neuroval3d: v{getattr(neuroval3d, '__version__', '?')} from {neuroval3d.__file__}\")\n"
     ),
     md(
         "## 1 · Download real radiology reports from HuggingFace\n"
