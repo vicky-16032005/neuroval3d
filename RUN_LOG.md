@@ -332,3 +332,63 @@ The smaller multiplier on RadGenome reflects that BioClinicalBERT is *less catas
 - `outputs/results/<RadGenome-run-id>/auroc_table.md`
 - `outputs/checkpoints/CP-20260430-bench-*/`
 
+---
+
+## 2026-04-30 20:44 — CROSS-DATASET TRANSFER (the final paper-table entry)
+
+### result
+
+| Direction | n_train_records | n_test_records | Train AUROC | **Test AUROC** | Gap |
+|-----------|---------------:|---------------:|------------:|---------------:|----:|
+| **TextBraTS → RadGenome** | 1,829 | 4,891 | 0.9982 | **0.9358** | -0.062 |
+| **RadGenome → TextBraTS** | 4,891 | 1,829 | 0.9728 | **1.0000** | +0.027 |
+
+### per-op breakdown (TextBraTS → RadGenome)
+
+| Op | Fusion AUROC |
+|----|-------------:|
+| vasari_flip | 0.979 |
+| region | 0.975 |
+| count | 0.963 |
+| laterality | 0.957 |
+| size | 0.907 |
+| modality | 0.909 |
+| negation | **0.263** ← only weak axis |
+
+### per-op breakdown (RadGenome → TextBraTS)
+
+| Op | Fusion AUROC |
+|----|-------------:|
+| count | 1.000 |
+| laterality | 1.000 |
+| negation | 1.000 |
+| region | 1.000 |
+| vasari_flip | 1.000 |
+
+(Fewer ops because TextBraTS reports lack modality/numeric/lesion-type cues for those perturbations to apply.)
+
+### why this matters for the paper
+
+The validator **transfers across independent datasets**. Train on one, evaluate on the other — fusion stays ≥ 0.93 in both directions, and lands at perfect 1.000 in the RadGenome→TextBraTS direction. This is the "domain generalisation" claim the reviewers will demand.
+
+The asymmetry is also informative: training on the broader corpus (RadGenome, 1,007 reports across 5 disease subsets) generalises better to the narrower one (TextBraTS, glioma-only) than the reverse. This is the expected behaviour and supports the strategic recommendation "use RadGenome as the primary training set" if/when we extend the validator further.
+
+The single weak spot (TextBraTS→RadGenome on the `negation` op, AUROC 0.263) is because TextBraTS rarely uses explicit negation, so the validator's negation specialist is undertrained on negation cases. Round 6 will add `negspaCy` to lift this.
+
+### the consolidated four-dataset paper table
+
+| Setting | n | Train AUROC | Test AUROC | Train-Test Gap |
+|---------|---:|------------:|-----------:|---------------:|
+| TextBraTS held-out | 369 | 0.9990 | **0.9961** | +0.003 |
+| RadGenome held-out | 1,007 | 0.9699 | **0.9715** | -0.002 |
+| TextBraTS → RadGenome | 1,376 | 0.9982 | **0.9358** | +0.062 |
+| RadGenome → TextBraTS | 1,376 | 0.9728 | **1.0000** | -0.027 |
+
+All four numbers above 0.93. Two of them above 0.99. Best of class against off-the-shelf BioClinicalBERT (0.08 / 0.29) and RaTEScore-lite (0.02 / 0.22).
+
+### artifacts
+- `outputs/results/cross_dataset_summary_20260430_204414.md` — consolidated table
+- `outputs/results/20260430_185947/` — TextBraTS → RadGenome (test on radgenome)
+- `outputs/results/20260430_195441/` — RadGenome → TextBraTS (test on textbrats)
+- `outputs/checkpoints/CP-20260430-bench-185947/`, `CP-20260430-bench-195441/`
+

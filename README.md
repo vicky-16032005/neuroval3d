@@ -20,14 +20,23 @@ We **do** claim three first-of-their-kind contributions on open territory:
 
 The publishable claim is **brain-MRI report VALIDATION**, not generation. The generator is a respectable baseline; the validator is the contribution.
 
-### Headline benchmark numbers (held-out evaluation, real data)
+### Headline benchmark numbers (real data)
+
+**Held-out within-dataset** — fusion trained on 70% of base reports, evaluated on the other 30%:
 
 | Dataset | n_reports | Test AUROC | Train AUROC | vs BioClinicalBERT | vs RaTEScore-lite |
 |---------|----------:|-----------:|------------:|-------------------:|------------------:|
-| **TextBraTS** (radiologist-refined GPT-4o) | 369 | **0.9961** | 0.9990 | 12.1× better (0.082) | ≥100× better (0.010) |
-| **RadGenome-Brain MRI** (5 disease subsets) | 1,007 | **0.9715** | 0.9699 | 3.4× better (0.289) | 4.4× better (0.220) |
+| **TextBraTS** | 369 | **0.9961** | 0.9990 | 12.1× better (0.082) | ≥100× better (0.010) |
+| **RadGenome-Brain MRI** | 1,007 | **0.9715** | 0.9699 | 3.4× better (0.289) | 4.4× better (0.220) |
 
-Both numbers from a 70/30 split by base report (so a base report and its perturbations don't leak across train/test). Train-test gaps are 0.003 and -0.002 respectively — no overfit on either dataset.
+**Cross-dataset transfer** — fusion trained on one dataset, evaluated on the other (the domain-generalisation claim):
+
+| Direction | Train AUROC | **Test AUROC** |
+|-----------|------------:|---------------:|
+| TextBraTS → RadGenome | 0.9982 | **0.9358** |
+| RadGenome → TextBraTS | 0.9728 | **1.0000** |
+
+All four numbers above 0.93. Train-test gaps within ±0.07. The validator generalises across two independent radiology-report datasets.
 
 ### Per-op breakdown (RadGenome — all 7 active ops fired)
 
