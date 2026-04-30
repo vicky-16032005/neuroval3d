@@ -1,8 +1,10 @@
 from neuroval3d.data.datasets import DatasetRegistry, BrainMRIDatasetSpec
 from neuroval3d.data.loaders import (
-    load_textbrats,
-    textbrats_reports_only,
     iter_reports_jsonl,
+    load_radgenome,
+    load_textbrats,
+    radgenome_reports_only,
+    textbrats_reports_only,
 )
 from neuroval3d.data.preprocessing import (
     Stage1Preprocessor,
@@ -19,6 +21,8 @@ __all__ = [
     "Stage1Preprocessor",
     "SyntheticReportGenerator",
     "iter_reports_jsonl",
+    "load_radgenome",
     "load_textbrats",
+    "radgenome_reports_only",
     "textbrats_reports_only",
 ]

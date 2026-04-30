@@ -1,4 +1,4 @@
-from neuroval3d.evaluation.benchmark import BenchmarkResult, run_benchmark
+from neuroval3d.evaluation.benchmark import BenchmarkResult, run_benchmark, run_cross_dataset_benchmark
 from neuroval3d.evaluation.metrics import compute_nlg_metrics
 from neuroval3d.evaluation.paraphrase import paraphrase, paraphrase_batch
 from neuroval3d.evaluation.perturbation import (
@@ -18,4 +18,5 @@ __all__ = [
     "paraphrase",
     "paraphrase_batch",
     "run_benchmark",
+    "run_cross_dataset_benchmark",
 ]

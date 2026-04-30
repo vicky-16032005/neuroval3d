@@ -62,3 +62,88 @@ def iter_reports_jsonl(path: str | Path) -> Iterable[dict[str, str]]:
         for line in f:
             if line.strip():
                 yield json.loads(line)
+
+
+# ---------------------------------------------------------------------- RadGenome-Brain MRI
+
+DEFAULT_RADGENOME_ROOT = Path("data/raw/RadGenome-BrainMRI")
+RADGENOME_SUBSETS = ("BraTS_GLI", "BraTS_MEN", "BraTS_MET", "ISLES22", "WMH")
+RADGENOME_DISEASE = {
+    "BraTS_GLI": "glioma",
+    "BraTS_MEN": "meningioma",
+    "BraTS_MET": "metastasis",
+    "ISLES22": "infarction",
+    "WMH": "white_matter_hyperintensity",
+}
+
+
+def load_radgenome(
+    root: str | Path = DEFAULT_RADGENOME_ROOT,
+    section: str = "global_finding",
+    subsets: tuple[str, ...] | None = None,
+    limit: int | None = None,
+) -> list[dict[str, str]]:
+    """Load RadGenome-Brain MRI reports from disk.
+
+    Args:
+        section: which JSON to read per subset — `global_finding`, `impression`, or
+                 `modal_wise_finding`. Defaults to `global_finding` (the richest single text).
+        subsets: tuple of subset names; defaults to all five.
+    """
+    import json
+    root = Path(root)
+    if not root.exists():
+        raise FileNotFoundError(
+            f"RadGenome reports not found at {root.resolve()}. "
+            f"Run `python scripts/download_radgenome_reports.py` first."
+        )
+    subsets = subsets or RADGENOME_SUBSETS
+    out: list[dict[str, str]] = []
+    for subset in subsets:
+        path = root / subset / f"{section}.json"
+        if not path.exists():
+            continue
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            continue
+        for subj_id, payload in data.items():
+            # Three known layouts:
+            # 1. global_finding / modal_wise_finding: payload is the report string
+            # 2. impression: payload is {"disease": [...], "impression": "..."}
+            text: str | None = None
+            disease_labels: list[str] = []
+            if isinstance(payload, str):
+                text = payload
+            elif isinstance(payload, dict):
+                text = payload.get("impression") or payload.get("finding") or payload.get("report")
+                if isinstance(payload.get("disease"), list):
+                    disease_labels = [str(d) for d in payload["disease"]]
+            if not text or not text.strip():
+                continue
+            entry: dict[str, str] = {
+                "subject_id": subj_id,
+                "report": text,
+                "source": "RadGenome-Brain_MRI",
+                "subset": subset,
+                "disease": RADGENOME_DISEASE.get(subset, "unknown"),
+                "section": section,
+                "license": "research-only (AutoRG-Brain repo)",
+            }
+            if disease_labels:
+                entry["disease_labels"] = "|".join(disease_labels)
+            out.append(entry)
+    if limit:
+        out = out[:limit]
+    return out
+
+
+def radgenome_reports_only(
+    root: str | Path = DEFAULT_RADGENOME_ROOT,
+    section: str = "global_finding",
+    subsets: tuple[str, ...] | None = None,
+    limit: int | None = None,
+) -> list[str]:
+    """Flat list of RadGenome reports for `run_benchmark`."""
+    return [r["report"] for r in load_radgenome(root=root, section=section,
+                                                 subsets=subsets, limit=limit)]

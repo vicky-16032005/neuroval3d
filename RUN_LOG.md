@@ -258,3 +258,35 @@ That is a defensible MIDL/BrainLes headline.
 - `outputs/results/20260430_171052/result.json`
 - `outputs/checkpoints/CP-20260430-bench-171052/`
 
+---
+
+## 2026-04-30 17:43 — Phase 4 round 5: HELD-OUT EVAL (refactor + re-run)
+
+### refactor
+- `evaluation/benchmark.py` rewritten to do a 70/30 split by `original_id` (so a base report and its perturbations stay together). Trains the fusion logistic regression on train rows only; reports `auroc_overall` (held-out test) and `auroc_train` (transparency) separately.
+- Added `run_cross_dataset_benchmark(train_reports, test_reports, ...)` for cross-dataset transfer.
+- `BenchmarkResult` extended with `auroc_train`, `n_train`, `n_test`, `train_frac`, `cross_dataset` fields.
+- CLI: `neuroval3d benchmark --train-frac 0.7` and new `neuroval3d cross-dataset --train ... --test ...` subcommand.
+- Pulled RadGenome-Brain MRI reports from HuggingFace `JiayuLei/RadGenome-Brain_MRI`: 1,007 subjects across 5 disease subsets (BraTS_GLI 230, BraTS_MEN 230, BraTS_MET 237, ISLES22 250, WMH 60). Reports include explicit modality mentions (T1W/T2W/FLAIR/T1C) and disease labels.
+- 33 → 36 tests, all green (added `test_radgenome_loader.py`).
+
+### TextBraTS held-out (n=369 → 1829 records, 258 train / 111 test base reports)
+
+| Validator | Test AUROC | Train AUROC | laterality | negation | region | vasari_flip |
+|-----------|-----------:|------------:|-----------:|---------:|-------:|------------:|
+| **fusion** | **0.9961** | 0.9990 | 0.9955 | 1.0000 | 0.9966 | 1.0000 |
+| structural | 0.6242 | 0.6669 | 0.6796 | 1.0000 | 0.5614 | 1.0000 |
+| lexical | 0.4218 | 0.4547 | 0.3156 | 1.0000 | 0.5147 | 0.8348 |
+| semantic | 0.0821 | 0.0911 | 0.0001 | 0.3243 | 0.1611 | 0.0000 |
+| negation | 0.0498 | 0.0413 | 0.0495 | 0.1126 | 0.0495 | 0.0495 |
+| ratescore_lite (baseline) | 0.0099 | 0.0212 | 0.0080 | 0.1734 | 0.0098 | 0.0375 |
+
+### the credible number
+With proper held-out evaluation (fusion trained on 258 base reports, evaluated on 111 unseen), NeuroVal-3D fusion AUROC = **0.9961**. The train-test gap is **0.0029** — fusion isn't memorising. This is the publishable real-data number for TextBraTS.
+
+### artifacts
+- `outputs/results/<TextBraTS-held-out-run-id>/auroc_table.md`
+
+### in flight (background bg=bpa3trk29)
+- Held-out RadGenome benchmark on n=1007 reports, ~50 min.
+

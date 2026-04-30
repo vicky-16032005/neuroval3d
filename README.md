@@ -20,25 +20,25 @@ We **do** claim three first-of-their-kind contributions on open territory:
 
 The publishable claim is **brain-MRI report VALIDATION**, not generation. The generator is a respectable baseline; the validator is the contribution.
 
-### Headline benchmark numbers
+### Headline benchmark numbers (held-out evaluation, real data)
 
-**Real data — 369 TextBraTS radiologist-refined reports (n=1,829 records, CPU)**
+**TextBraTS — 369 radiologist-refined reports, 70/30 split (258 train / 111 test base reports → 1,829 records)**
 
-| | NeuroVal-3D | Off-the-shelf BioClinicalBERT | RaTEScore-lite (Jaccard) |
+| | NeuroVal-3D fused | BioClinicalBERT off-the-shelf | RaTEScore-lite (Jaccard) |
 |---|---|---|---|
-| Overall AUROC | **0.998** | 0.088 | 0.017 |
-| Multiplier | 1.0× | **11.3× weaker** | **57× weaker** |
+| Held-out test AUROC | **0.9961** | 0.0821 | 0.0099 |
+| Train AUROC | 0.9990 | 0.0911 | 0.0212 |
+| Train-test gap | 0.0029 | — | — |
 
-Per-op fusion: count 1.00, vasari-flip 1.00, region 1.00, laterality 1.00, negation 0.85.
-
-**Synthetic warmup — 80 templated reports (n=480 records, CPU)**
+**Synthetic warmup — 80 templated reports**
 
 | | NeuroVal-3D | BioClinicalBERT | RaTEScore-lite |
 |---|---|---|---|
-| Overall AUROC | 0.878 | 0.247 | 0.062 |
-| Multiplier | 1.0× | 3.6× weaker | 14.2× weaker |
+| AUROC | 0.878 | 0.247 | 0.062 |
 
-Seven specialised validator axes (semantic, lexical, structural, numeric, modality, negation, lesion-type) feed a logistic fusion. Different axes catch different perturbation types — `numeric → size 1.00`, `lesion-type → lesion-type 1.00`, `modality → modality 0.93`, `structural → vasari-flip 1.00`.
+The validator stack is seven specialised axes (semantic, lexical, structural, numeric, modality, negation, lesion-type) fed into a logistic fusion. Different axes catch different perturbation types — `structural → vasari-flip 1.00`, `structural → negation 1.00`, `lexical → count 1.00`, `numeric → size 1.00`, `modality → modality 0.93`. The held-out evaluation confirms the fusion learns clean per-axis weighting without overfitting (gap < 0.003).
+
+**Coming next:** held-out RadGenome-Brain MRI (1,007 reports, 5 disease subsets) and cross-dataset transfer (TextBraTS ↔ RadGenome) are the credibility kicks for the paper.
 
 ## Pipeline (8 stages)
 
