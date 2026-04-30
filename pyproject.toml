@@ -53,6 +53,12 @@ rag = [
     "faiss-cpu>=1.8",
     "sentence-transformers>=3.0",
 ]
+data = [
+    "synapseclient>=4.4",
+    "datasets>=2.20",
+    "huggingface_hub>=0.24",
+    "python-dotenv>=1.0",
+]
 
 [project.scripts]
 neuroval3d = "neuroval3d.cli:app"

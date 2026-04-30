@@ -21,8 +21,9 @@
 
 ### BraTS (entire suite)
 - BraTS 2020 (369), 2021 (1,470), 2023 adult glioma (~1,250), 2024 post-treatment glioma + sub-challenges
-- Register: https://www.synapse.org/ and https://www.med.upenn.edu/cbica/brats2024/
-- Place at `data/raw/BraTS/{2020,2021,2023,2024}/`
+- **Path of least resistance: Kaggle community mirror** at https://www.kaggle.com/datasets/awsaf49/brats20-dataset-training-validation. Just needs a Kaggle account + API token; no IRB. Use `python scripts/download_brats_kaggle.py`.
+- Official sources (slower, more bureaucratic): https://www.synapse.org/ (BraTS 2021 = `syn25829067`) and https://www.med.upenn.edu/cbica/brats2024/
+- Place at `data/raw/BraTS2020-kaggle/` (Kaggle path) or `data/raw/BraTS/{2020,2021,2023,2024}/` (official path)
 
 ### ISLES 2022 / 2024 (stroke)
 - 250 longitudinal acute stroke cases with multimodal CT + follow-up MRI

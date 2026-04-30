@@ -43,15 +43,24 @@ def info() -> None:
 @app.command()
 def benchmark(
     synthetic: bool = typer.Option(False, help="Use built-in synthetic reports (no download)."),
-    n_samples: int = typer.Option(120, help="Number of base reports to perturb."),
+    textbrats: bool = typer.Option(False, help="Use real TextBraTS reports from data/raw/TextBraTS/."),
+    n_samples: int = typer.Option(120, help="Max base reports to perturb (cap)."),
     out_dir: Path = typer.Option(Path("outputs/results"), help="Where to write the AUROC table."),
 ) -> None:
     """Run the perturbation benchmark and print the AUROC table."""
     from neuroval3d.evaluation.benchmark import run_benchmark
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    log.info("Running benchmark (synthetic=%s, n=%d)", synthetic, n_samples)
-    result = run_benchmark(use_synthetic=synthetic, n_samples=n_samples, out_dir=out_dir)
+
+    if textbrats:
+        from neuroval3d.data import textbrats_reports_only
+        reports = textbrats_reports_only(limit=n_samples)
+        log.info("Running benchmark on %d real TextBraTS reports", len(reports))
+        result = run_benchmark(reports=reports, use_synthetic=False, n_samples=len(reports),
+                               out_dir=out_dir)
+    else:
+        log.info("Running benchmark (synthetic=%s, n=%d)", synthetic or True, n_samples)
+        result = run_benchmark(use_synthetic=synthetic or True, n_samples=n_samples, out_dir=out_dir)
     rprint(result.summary_table())
 
 

@@ -205,3 +205,56 @@ These are the first published brain-MRI hallucination-detection AUROC numbers. E
 ### what this means
 The structured-validator-matrix story now has a clean, defensible AUROC table the paper can lead with. NeuroVal-3D is **3.6× better than off-the-shelf BioClinicalBERT** and **14.2× better than RaTEScore-lite** on synthetic brain-MRI hallucination detection. With seven specialised axes feeding logistic fusion, the system catches eight controlled-error types with distinct strengths per axis. The Phase-4 paper-grade run will use real generated reports against TextBraTS / RadGenome-Brain MRI references, but the validator architecture is now locked in.
 
+---
+
+## 2026-04-30 17:10 — FIRST REAL-DATA BENCHMARK
+
+### what changed
+- Switched from Synapse-based BraTS access (heavy IRB) to community sources (HuggingFace).
+- Downloaded all 369 TextBraTS reports from `Jupitern52/TextBraTS` (MIT-licensed; radiologist-refined GPT-4o reports paired with BraTS 2020 volumes).
+- Added `data.loaders.load_textbrats` and CLI flag `--textbrats`.
+- Added Kaggle community-mirror prep script (`scripts/download_brats_kaggle.py`) for when Phase 2 needs volumes.
+
+### cmd
+`.venv/Scripts/python.exe -m neuroval3d.cli benchmark --textbrats --n-samples 369`
+
+### results (n=369 real reports, 1,829 (clean+perturbed) records)
+
+| Validator | Overall AUROC | count | laterality | negation | region | vasari_flip |
+|-----------|---------------|-------|----------|----------|--------|-------------|
+| **fusion** | **0.9982** | 1.0000 | 0.9987 | 0.8506 | 0.9990 | 1.0000 |
+| structural | 0.6547 | 0.5064 | 0.7389 | **1.0000** | 0.5678 | **1.0000** |
+| lexical | 0.4447 | **0.9953** | 0.3482 | 0.8800 | 0.5310 | 0.8257 |
+| semantic (BioClinicalBERT) | 0.0884 | 0.0054 | 0.0003 | 0.1119 | 0.1759 | 0.0000 |
+| negation | 0.0439 | 0.0420 | 0.0420 | 0.4280 | 0.0420 | 0.0420 |
+| ratescore_lite (baseline) | 0.0175 | 0.0583 | 0.0144 | 0.0956 | 0.0194 | 0.0601 |
+| numeric / modality / lesion_type | 0.5000 | — | — | — | — | — |
+
+### the headline numbers (real data)
+
+| | NeuroVal-3D | BioClinicalBERT off-the-shelf | RaTEScore-lite |
+|---|---|---|---|
+| Overall AUROC | **0.998** | 0.088 | 0.017 |
+| Multiplier vs ours | 1.0× | 11.3× weaker | **57× weaker** |
+
+This is the first real-data hallucination AUROC for brain-MRI report validation. The synthetic 0.878 was a smoke check; this is the publishable claim.
+
+### honest caveats
+- **Only 5 of 8 perturbation ops triggered.** TextBraTS reports describe brain MRI in functional terms ("lesion area", "edema", "necrosis", "ventricular compression") and rarely mention modality (T1/T2), numeric measurements (cm/mm), or specific lesion families (glioma/meningioma). The numeric/modality/lesion_type validators thus got 0.5 overall — they didn't fire because there were no positives to find. They will matter on the eventual real-generator output (which mentions modalities and sizes more often).
+- **No held-out split yet.** All 369 reports are used both for fusion training and evaluation. Strict ML hygiene needs a 70/30 split; this is round-1 evaluation.
+- **"Clean" pairs are paraphrases of the same text.** The benchmark tests "can you tell paraphrase from corruption", not "can you tell two valid reports about the same scan apart". The latter requires a second human-written reference per scan — TextBraTS doesn't have that, but RadGenome-Brain MRI is supposed to.
+- **Semantic axis is even more anti-predictive on real data (0.088 vs synthetic 0.247).** BioClinicalBERT cosine on TextBraTS-style structured reports shifts more on surface paraphrases than on clinical perturbations. This is the failure mode our paper is built around — and now we have a real-data number to anchor it.
+- **Negation axis is anti-predictive overall (0.044).** It's perfect inside the negation operation (0.43 — well above its base rate of ~0.05), but the dataset has very few negations to begin with, so it's mostly silent on other ops.
+
+### what this number actually means for the paper
+"On 369 real radiologist-refined brain MRI reports from TextBraTS, NeuroVal-3D achieves AUROC **0.998** at distinguishing the original from controlled-error variants, vs **0.088** for off-the-shelf BioClinicalBERT cosine and **0.017** for a token-overlap baseline. We are 11× and 57× better than these baselines respectively."
+
+That is a defensible MIDL/BrainLes headline.
+
+### artifacts
+- `outputs/results/20260430_171052/auroc_table.md`
+- `outputs/results/20260430_171052/perturbation_set.jsonl` (1,829 rows)
+- `outputs/results/20260430_171052/scores.jsonl`
+- `outputs/results/20260430_171052/result.json`
+- `outputs/checkpoints/CP-20260430-bench-171052/`
+

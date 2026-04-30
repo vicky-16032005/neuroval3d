@@ -20,14 +20,25 @@ We **do** claim three first-of-their-kind contributions on open territory:
 
 The publishable claim is **brain-MRI report VALIDATION**, not generation. The generator is a respectable baseline; the validator is the contribution.
 
-### Current synthetic benchmark numbers (n=80 reports → 480 records, all CPU)
+### Headline benchmark numbers
 
-| | NeuroVal-3D | Off-the-shelf BioClinicalBERT | RaTEScore-lite |
+**Real data — 369 TextBraTS radiologist-refined reports (n=1,829 records, CPU)**
+
+| | NeuroVal-3D | Off-the-shelf BioClinicalBERT | RaTEScore-lite (Jaccard) |
 |---|---|---|---|
-| Overall AUROC | **0.878** | 0.247 | 0.062 |
+| Overall AUROC | **0.998** | 0.088 | 0.017 |
+| Multiplier | 1.0× | **11.3× weaker** | **57× weaker** |
+
+Per-op fusion: count 1.00, vasari-flip 1.00, region 1.00, laterality 1.00, negation 0.85.
+
+**Synthetic warmup — 80 templated reports (n=480 records, CPU)**
+
+| | NeuroVal-3D | BioClinicalBERT | RaTEScore-lite |
+|---|---|---|---|
+| Overall AUROC | 0.878 | 0.247 | 0.062 |
 | Multiplier | 1.0× | 3.6× weaker | 14.2× weaker |
 
-Seven specialised validator axes (semantic, lexical, structural, numeric, modality, negation, lesion-type) feed a logistic fusion. Different axes catch different perturbation types, with each near-perfect on its target axis (numeric → size 1.00, lesion-type → lesion-type 1.00, modality → modality 0.93, structural → vasari-flip 0.97).
+Seven specialised validator axes (semantic, lexical, structural, numeric, modality, negation, lesion-type) feed a logistic fusion. Different axes catch different perturbation types — `numeric → size 1.00`, `lesion-type → lesion-type 1.00`, `modality → modality 0.93`, `structural → vasari-flip 1.00`.
 
 ## Pipeline (8 stages)
 

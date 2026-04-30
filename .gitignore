@@ -57,6 +57,12 @@ outputs/results/**
 *.key
 *.token
 secrets.yaml
+synapse recov codes/
+recovery codes/
+recov*codes/
+*.recovery
+*recovery*.pdf
+*recov*.pdf
 
 # OS
 .DS_Store
