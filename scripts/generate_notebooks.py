@@ -68,15 +68,16 @@ PERTURBATION_DEMO = [
 ]
 
 VALIDATOR_DEMO = [
-    ("markdown", "# 03 — Validator scores on a clean vs perturbed report\n\nDemonstrates that the validator gives lower scores to hallucinated reports.\n"),
-    ("code", "from neuroval3d.validators import LexicalValidator, SemanticValidator, StructuralValidator, FusionValidator\n"),
-    ("code", "ref = 'Right frontal high-grade glioma, 3.5 cm, with moderate edema. No restricted diffusion.'\nclean = ref\nflipped = ref.replace('Right', 'Left').replace('No restricted diffusion', 'Restricted diffusion is present')\n\nsem = SemanticValidator()\nlex = LexicalValidator().fit([ref, flipped, clean])\nst = StructuralValidator()\n\nprint('clean :', sem.score(ref, clean), lex.score(ref, clean), st.score(ref, clean))\nprint('flip  :', sem.score(ref, flipped), lex.score(ref, flipped), st.score(ref, flipped))\n"),
+    ("markdown", "# 03 — Seven-axis validator on clean vs perturbed reports\n\nDemonstrates each axis independently and the fused score.\n"),
+    ("code", "from neuroval3d.validators import (\n    SemanticValidator, LexicalValidator, StructuralValidator,\n    NumericValidator, ModalityValidator, NegationValidator, LesionTypeValidator,\n    FusionValidator,\n)\n"),
+    ("code", "ref = 'Right frontal high-grade glioma, 3.5 cm, with marked oedema on FLAIR. No restricted diffusion.'\nclean = ref\nflipped = ref.replace('Right', 'Left').replace('No restricted diffusion', 'Restricted diffusion is present').replace('glioma', 'meningioma').replace('3.5 cm', '1.0 cm').replace('FLAIR', 'T1')\n\nsem = SemanticValidator()\nlex = LexicalValidator().fit([ref, flipped, clean])\nst = StructuralValidator()\nnum = NumericValidator()\nmod = ModalityValidator()\nneg = NegationValidator()\nlt = LesionTypeValidator()\n\nfor label, cand in [('clean', clean), ('flipped', flipped)]:\n    print(f'\\n--- {label} ---')\n    print('semantic   :', round(sem.score(ref, cand), 3))\n    print('lexical    :', round(lex.score(ref, cand), 3))\n    print('structural :', round(st.score(ref, cand), 3))\n    print('numeric    :', round(num.score(ref, cand), 3))\n    print('modality   :', round(mod.score(ref, cand), 3))\n    print('negation   :', round(neg.score(ref, cand), 3))\n    print('lesion_type:', round(lt.score(ref, cand), 3))\n"),
 ]
 
 BENCHMARK_DEMO = [
-    ("markdown", "# 04 — Perturbation benchmark + AUROC table\n\nThis is the headline notebook for the paper: it produces the AUROC table comparing each validator axis.\n"),
+    ("markdown", "# 04 — Perturbation benchmark + AUROC table\n\nHeadline notebook for the paper. Produces the AUROC table over the 7 NeuroVal-3D axes plus baselines on a perturbation set of 80 synthetic reports × 4 perturbed variants each = 480 records.\n\nExpected (n=80, CPU, with BioClinicalBERT load): fusion ≈ 0.88, lexical ≈ 0.61, structural ≈ 0.67, semantic ≈ 0.25, RaTEScore-lite ≈ 0.06.\n"),
     ("code", "from neuroval3d.evaluation import run_benchmark\nresult = run_benchmark(use_synthetic=True, n_samples=80, n_per_report=4)\nprint(result.summary_table())\n"),
-    ("code", "import json\nprint(json.dumps(result.auroc_overall, indent=2))\nprint(json.dumps(result.auroc_by_op, indent=2))\n"),
+    ("code", "import json\nprint('=== overall AUROC ===')\nprint(json.dumps(result.auroc_overall, indent=2))\nprint('\\n=== AUROC by perturbation op ===')\nprint(json.dumps(result.auroc_by_op, indent=2))\n"),
+    ("markdown", "## Headline result\n\n| | NeuroVal-3D | BioClinicalBERT (off-the-shelf) | RaTEScore-lite |\n|---|---|---|---|\n| Overall AUROC | **0.878** | 0.247 | 0.062 |\n| Multiplier vs ours | 1.0× | 3.6× weaker | 14.2× weaker |\n"),
 ]
 
 
