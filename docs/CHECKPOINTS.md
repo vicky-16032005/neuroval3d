@@ -27,6 +27,10 @@ Every milestone, model checkpoint, and reproducible result lands here. Append-on
 | CP-20260430-bench-174304 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=8 train_frac=0.7 (`auroc_fusion_test`=0.2500) | `outputs\checkpoints\CP-20260430-bench-174304` |
 | CP-20260430-bench-174356 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=369 train_frac=0.7 (`auroc_fusion_test`=0.9961) | `outputs\checkpoints\CP-20260430-bench-174356` |
 | CP-20260430-bench-180010 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=1007 train_frac=0.7 (`auroc_fusion_test`=0.9715) | `outputs\checkpoints\CP-20260430-bench-180010` |
+| CP-20260430-bench-194935 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=8 train_frac=0.7 (`auroc_fusion_test`=0.2500) | `outputs\checkpoints\CP-20260430-bench-194935` |
+| CP-20260430-bench-195135 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=8 train_frac=0.7 (`auroc_fusion_test`=0.2500) | `outputs\checkpoints\CP-20260430-bench-195135` |
+| CP-20260430-bench-185947 | 2026-04-30 | Phase 4 (validator+benchmark) | Cross-dataset bench {'train_label': 'textbrats', 'test_label': 'radgenome'} (`auroc_fusion_test`=0.9358) | `outputs\checkpoints\CP-20260430-bench-185947` |
+| CP-20260430-bench-200708 | 2026-04-30 | Phase 4 (validator+benchmark) | Held-out bench n=8 train_frac=0.7 (`auroc_fusion_test`=0.2500) | `outputs\checkpoints\CP-20260430-bench-200708` |
 
 ---
 

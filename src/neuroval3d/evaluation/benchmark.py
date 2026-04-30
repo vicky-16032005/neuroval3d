@@ -211,6 +211,7 @@ def run_cross_dataset_benchmark(
 def score_records(pset: PerturbationSet) -> list[dict[str, object]]:
     """Score every record on the 7 NeuroVal-3D axes + RaTEScore-lite baseline."""
     semantic = SemanticValidator()
+    log.info("Semantic validator on device: %s", semantic.config.device)
     lexical = LexicalValidator().fit(
         [r.original for r in pset.records] + [r.perturbed for r in pset.records]
     )
@@ -225,8 +226,16 @@ def score_records(pset: PerturbationSet) -> list[dict[str, object]]:
     lesion_type = LesionTypeValidator()
     ratescore_lite = RaTEScoreLite()
 
+    # tqdm if available, else identity — keeps the loop visible to the user when
+    # BioClinicalBERT scoring is dominating wall-clock.
+    try:
+        from tqdm.auto import tqdm
+        iterator = tqdm(pset.records, desc="scoring", unit="rec")
+    except ImportError:
+        iterator = pset.records
+
     rows: list[dict[str, object]] = []
-    for rec in pset.records:
+    for rec in iterator:
         is_clean = rec.op_detail == "<clean>"
         rows.append({
             "original_id": rec.original_id,

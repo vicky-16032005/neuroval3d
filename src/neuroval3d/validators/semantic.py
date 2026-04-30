@@ -17,14 +17,28 @@ DEFAULT_MODEL = "emilyalsentzer/Bio_ClinicalBERT"
 FALLBACK_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
+def _autodetect_device() -> str:
+    """Return 'cuda:0' if a GPU is available, else 'cpu'. Imported lazily so that
+    `import semantic` doesn't pay the cost of touching torch."""
+    try:
+        import torch
+        return "cuda:0" if torch.cuda.is_available() else "cpu"
+    except Exception:  # noqa: BLE001
+        return "cpu"
+
+
 @dataclass
 class SemanticValidatorConfig:
     model_name: str = DEFAULT_MODEL
     fallback_model: str = FALLBACK_MODEL
     max_length: int = 512
     pooling: str = "mean"
-    device: str = "cpu"
+    device: str | None = None  # None → autodetect cuda; pass "cpu" to force CPU
     use_hash_fallback: bool = True
+
+    def __post_init__(self) -> None:
+        if self.device is None:
+            self.device = _autodetect_device()
 
 
 class SemanticValidator:
