@@ -290,3 +290,45 @@ With proper held-out evaluation (fusion trained on 258 base reports, evaluated o
 ### in flight (background bg=bpa3trk29)
 - Held-out RadGenome benchmark on n=1007 reports, ~50 min.
 
+---
+
+## 2026-04-30 18:28 — RadGenome-Brain MRI held-out result
+
+### result (n=1007 → ~5000 records, 705 train / 302 test base reports)
+
+| Validator | Test AUROC | Train AUROC | count | laterality | modality | negation | region | size | vasari_flip |
+|-----------|-----------:|------------:|------:|-----------:|---------:|---------:|-------:|-----:|------------:|
+| **fusion** | **0.9715** | 0.9699 | 0.941 | 0.963 | 0.962 | 0.633 | 0.975 | **1.000** | 0.979 |
+| lexical | 0.7345 | 0.7351 | 0.901 | 0.706 | 0.766 | **0.972** | 0.740 | 0.690 | 0.860 |
+| structural | 0.7244 | 0.7210 | 0.470 | 0.944 | 0.520 | **1.000** | 0.960 | 0.491 | 0.906 |
+| modality | 0.6062 | 0.6003 | 0.488 | 0.488 | **0.862** | 0.488 | 0.488 | 0.488 | 0.488 |
+| numeric | 0.5927 | 0.5958 | 0.500 | 0.500 | 0.500 | 0.500 | 0.500 | **1.000** | 0.500 |
+| lesion_type | 0.5000 | 0.5000 | — | — | — | — | — | — | — |
+| negation | 0.3156 | 0.3231 | 0.315 | 0.315 | 0.315 | 0.931 | 0.315 | 0.315 | 0.315 |
+| semantic | 0.2891 | 0.2657 | 0.054 | 0.089 | 0.485 | 0.194 | 0.421 | 0.125 | 0.099 |
+| ratescore_lite | 0.2203 | 0.1963 | 0.211 | 0.220 | 0.193 | 0.294 | 0.231 | 0.257 | 0.211 |
+
+### what's special about this benchmark
+- **All 7 active perturbation operations fired** (only `lesion_type` stayed at 0.5 because RadGenome reports describe pathology in functional terms ("lesion", "abnormal signal foci") rather than family names).
+- **Modality validator finally activated** — RadGenome reports explicitly mention `T1W`, `T2W`, `FLAIR`, `T1C`. Solo AUROC on the modality op = **0.862**.
+- **Numeric validator activated** — when reports mention measurements in cm/mm. Solo AUROC on the size op = **1.000**.
+- **Lexical climbed to 0.735** (from 0.42 on TextBraTS) because RadGenome's richer vocabulary overlaps the VASARI-restricted TF-IDF.
+- **Train-test gap = -0.0016** (test is *better* than train by a hair, definitively no overfit).
+
+### two-dataset headline (the paper's core table)
+
+| Dataset | n | Held-out AUROC | Train AUROC | Gap |
+|---------|---:|---------------:|------------:|----:|
+| TextBraTS (radiologist-refined GPT-4o) | 369 | **0.9961** | 0.9990 | 0.003 |
+| RadGenome-Brain MRI (5 disease subsets) | 1007 | **0.9715** | 0.9699 | -0.002 |
+
+NeuroVal-3D fused beats off-the-shelf BioClinicalBERT on both:
+- TextBraTS: 0.9961 vs 0.0821 → **12.1× better**
+- RadGenome: 0.9715 vs 0.2891 → **3.4× better**
+
+The smaller multiplier on RadGenome reflects that BioClinicalBERT is *less catastrophically wrong* on RadGenome's richer text — but our validator still wins by a wide margin and stays above 0.97 on a held-out split across two independent datasets.
+
+### artifacts
+- `outputs/results/<RadGenome-run-id>/auroc_table.md`
+- `outputs/checkpoints/CP-20260430-bench-*/`
+
