@@ -189,23 +189,67 @@ VASARI_FEATURES: tuple[VASARIFeature, ...] = (
 
 
 def vasari_vocabulary() -> list[str]:
-    """Return the flat token vocabulary for VASARI-restricted TF-IDF."""
+    """Return the flat token vocabulary for VASARI-restricted TF-IDF.
+
+    The vocabulary covers:
+      - VASARI feature short codes + canonical values + aliases (the structured layer)
+      - Pathology anchor terms (glioma, infarct, …)
+      - Anatomical region terms
+      - Modality tokens (T1 / T2 / FLAIR / DWI / ADC …) — needed because Stage 8 perturbations
+        flip modalities and the validator has to notice
+      - Numeric size descriptors and units (cm, mm, x.x cm …) — also Stage 8 territory
+      - Counting/quantifier tokens (one, two, multiple, solitary …) — for count-perturbation detection
+    """
     vocab: set[str] = set()
     for feat in VASARI_FEATURES:
         vocab.add(feat.short.replace("_", " "))
         for v in feat.values:
             v_norm = v.replace("_", " ").replace("-", " ")
             vocab.add(v_norm)
-        for value, aliases in feat.aliases.items():
+        for _value, aliases in feat.aliases.items():
             for a in aliases:
                 vocab.add(a.lower())
-    # plus a small high-signal closed set of clinical anchor terms
+    # Pathology anchor terms
     vocab.update({
         "glioma", "glioblastoma", "meningioma", "metastasis", "metastases",
-        "infarct", "infarction", "white matter hyperintensity",
+        "infarct", "infarction", "ischemic stroke",
+        "white matter hyperintensity", "small vessel disease", "leukoaraiosis",
         "midline shift", "mass effect", "ventricular compression",
         "leptomeningeal", "intra-axial", "extra-axial",
-        "frontal", "parietal", "temporal", "occipital", "cerebellar",
+    })
+    # Anatomical region terms (extended)
+    vocab.update({
+        "frontal", "parietal", "temporal", "occipital",
+        "cerebellar", "cerebellum",
+        "insular", "insula",
+        "thalamus", "thalamic",
+        "basal ganglia",
+        "brainstem", "pons", "medulla", "midbrain",
+        "corpus callosum", "splenium", "genu",
+    })
+    # Modality tokens — Stage 8 modality-perturbation requires these to be in the vocab
+    vocab.update({
+        "t1", "t1ce", "t1-weighted", "post-contrast t1",
+        "t2", "t2-weighted", "t2/flair",
+        "flair",
+        "dwi", "diffusion weighted", "diffusion-weighted",
+        "adc", "apparent diffusion coefficient",
+        "swi", "susceptibility weighted",
+        "mra", "mr angiography",
+        "perfusion",
+    })
+    # Size + unit tokens — Stage 8 size-perturbation requires these
+    vocab.update({
+        "cm", "mm", "centimeters", "millimeters",
+        "small", "large", "tiny", "massive",
+        "diameter", "longest axis", "perpendicular axis",
+    })
+    # Counting + quantifier tokens — Stage 8 count-perturbation requires these
+    vocab.update({
+        "one", "two", "three", "four", "five", "six", "seven",
+        "single", "solitary", "multiple", "few", "several", "numerous",
+        "lesion", "lesions", "mass", "masses", "nodule", "nodules",
+        "satellite", "satellites",
     })
     return sorted(vocab)
 

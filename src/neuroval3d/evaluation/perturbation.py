@@ -126,14 +126,32 @@ def build_perturbation_set(
     n_per_report: int = 4,
     seed: int = 7,
     ops: tuple[PerturbationOp, ...] | None = None,
+    use_paraphrase_for_clean: bool = True,
 ) -> PerturbationSet:
+    """Build a labeled perturbation set.
+
+    For each input report, we emit:
+      - one "clean" record where `perturbed` is either the original (when
+        `use_paraphrase_for_clean=False`) or a meaning-preserving paraphrase. The paraphrase
+        path produces a non-trivial benchmark — semantic similarity will not be 1.0 on
+        clean records, which makes AUROC reflect actual discrimination capacity.
+      - up to `n_per_report` perturbed records, one per applicable op type
+    """
+    from neuroval3d.evaluation.paraphrase import paraphrase as _paraphrase
+
     rng = np.random.default_rng(seed)
     ops_pool = list(ops or list(PerturbationOp))
     out = PerturbationSet()
     for i, rep in enumerate(reports):
-        # Add the clean original as a "no-op" record (label 0 = valid in the benchmark).
+        clean_target = _paraphrase(rep, seed=seed + i, max_changes=3) if use_paraphrase_for_clean else rep
         out.records.append(
-            PerturbationRecord(original=rep, perturbed=rep, op_type=PerturbationOp.LATERALITY, op_detail="<clean>", original_id=str(i))
+            PerturbationRecord(
+                original=rep,
+                perturbed=clean_target,
+                op_type=PerturbationOp.LATERALITY,
+                op_detail="<clean>",
+                original_id=str(i),
+            )
         )
         attempts = 0
         added = 0

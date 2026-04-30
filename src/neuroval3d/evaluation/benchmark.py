@@ -86,12 +86,17 @@ def run_benchmark(
     lexical = LexicalValidator().fit([r.original for r in pset.records] + [r.perturbed for r in pset.records])
     structural = StructuralValidator()
 
+    # Baselines: ratescore-lite is always cheap; bertscore is opt-in.
+    from neuroval3d.validators import RaTEScoreLite
+    ratescore_lite = RaTEScoreLite()
+
     rows: list[dict[str, object]] = []
     for rec in pset.records:
         is_clean = rec.op_detail == "<clean>"
         sem = semantic.score(rec.original, rec.perturbed)
         lex = lexical.score(rec.original, rec.perturbed)
         struct = structural.score(rec.original, rec.perturbed)
+        rs = ratescore_lite.score(rec.original, rec.perturbed)
         rows.append({
             "original_id": rec.original_id,
             "op_type": rec.op_type.value,
@@ -101,6 +106,7 @@ def run_benchmark(
             "semantic": sem,
             "lexical": lex,
             "structural": struct,
+            "ratescore_lite": rs,
         })
     write_jsonl(str(run_dir / "scores.jsonl"), rows)
 
@@ -118,6 +124,7 @@ def run_benchmark(
         ("lexical", [r["lexical"] for r in rows]),
         ("structural", [r["structural"] for r in rows]),
         ("fusion", fused),
+        ("ratescore_lite (baseline)", [r["ratescore_lite"] for r in rows]),
     ]:
         auroc_overall[name] = _auroc(labels, scores)
         for op in PerturbationOp:

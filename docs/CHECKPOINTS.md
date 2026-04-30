@@ -13,6 +13,8 @@ Every milestone, model checkpoint, and reproducible result lands here. Append-on
 | CP-20260430-bench-150510 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150510` |
 | CP-20260430-bench-150644 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150644` |
 | CP-20260430-bench-150812 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150812` |
+| CP-20260430-bench-151239 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=0.7344) | `outputs\checkpoints\CP-20260430-bench-151239` |
+| CP-20260430-bench-151328 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=80 (`auroc_fusion`=0.6822) | `outputs\checkpoints\CP-20260430-bench-151328` |
 
 ---
 
