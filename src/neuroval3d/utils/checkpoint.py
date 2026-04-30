@@ -84,6 +84,8 @@ class CheckpointManager:
             json.dump(artifact, f, indent=2, default=str)
         return path
 
+    LEDGER_MARKER = "---"  # appears after the main table; we insert above the first occurrence
+
     def _append_ledger(self, meta: CheckpointMeta) -> None:
         if not self.ledger_path.exists():
             return
@@ -95,8 +97,13 @@ class CheckpointManager:
         existing = self.ledger_path.read_text(encoding="utf-8")
         if meta.cp_id in existing:
             return
-        with open(self.ledger_path, "a", encoding="utf-8") as f:
-            f.write("\n" + line + "\n")
+        # Prefer to insert the row inside the table (above the first horizontal-rule separator).
+        marker_idx = existing.find("\n" + self.LEDGER_MARKER + "\n")
+        if marker_idx > 0:
+            updated = existing[:marker_idx] + line + "\n" + existing[marker_idx:]
+        else:
+            updated = existing.rstrip() + "\n" + line + "\n"
+        self.ledger_path.write_text(updated, encoding="utf-8")
 
 
 def save_checkpoint(

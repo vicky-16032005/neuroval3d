@@ -4,7 +4,15 @@ Every milestone, model checkpoint, and reproducible result lands here. Append-on
 
 | ID | Date | Phase | What | Path / Memory ref |
 |----|------|-------|------|-------------------|
-| CP-000 | 2026-04-30 | Phase 0 | Repo skeleton + dependency lock + artifact persistence policy | `pyproject.toml`, `README.md`, `RUN_LOG.md`, memory: `project_phase0_complete.md` |
+| CP-000 | 2026-04-30 | Phase 0 | Repo skeleton + dependency lock + artifact persistence policy | `pyproject.toml`, `README.md`, `RUN_LOG.md` |
+| CP-001 | 2026-04-30 | Phase 0 | Phase 0 complete — 8-stage scaffold, validator + perturbation benchmark, pytest exit 0, n=80 benchmark AUROC table emitted, first git commit `633dd46` | git: `633dd46` · memory: `project_phase0_complete.md` |
+| CP-20260430-bench-130437 | 2026-04-30 | Phase 4 (validator+benchmark) | Smoke perturbation benchmark, n=8 (`auroc_fusion`=1.0000) | `outputs/checkpoints/CP-20260430-bench-130437/` |
+| CP-20260430-bench-145218 | 2026-04-30 | Phase 4 (validator+benchmark) | Production perturbation benchmark, n=80 (`auroc_fusion`=1.0000, lexical=0.860, structural=0.670, semantic=1.000 with BioClinicalBERT) | `outputs/checkpoints/CP-20260430-bench-145218/` |
+| PAUSE-1 | 2026-04-30 12:58 | Phase 0 | 96% session cap pause (resolved at 14:52 by CP-001) | `outputs/logs/session_pause_2026-04-30T12-58.md` |
+| CP-20260430-bench-150358 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150358` |
+| CP-20260430-bench-150510 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150510` |
+| CP-20260430-bench-150644 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150644` |
+| CP-20260430-bench-150812 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-150812` |
 
 ---
 
@@ -20,6 +28,5 @@ When a model checkpoint is saved, the entry MUST include:
 - the metric score that justified saving
 - the git SHA at training time
 
-| CP-20260430-bench-130437 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=8 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-130437` |
+<!-- auto-rows below have been merged into the main table above; this region is reserved for future automatic appends -->
 
-| CP-20260430-bench-145218 | 2026-04-30 | Phase 4 (validator+benchmark) | Perturbation benchmark with n=80 (`auroc_fusion`=1.0000) | `outputs\checkpoints\CP-20260430-bench-145218` |
