@@ -100,7 +100,6 @@ def run_benchmark(
     pset.save_jsonl(str(run_dir / "perturbation_set.jsonl"))
 
     rows = score_records(pset)
-    write_jsonl(str(run_dir / "scores.jsonl"), rows)
 
     # Held-out split by original_id (so a base report's clean + perturbations stay together)
     train_ids, test_ids = _split_ids(rows, train_frac=train_frac, seed=seed)
@@ -112,6 +111,16 @@ def run_benchmark(
     fusion = _fit_fusion(train_rows)
     fused_train = _fused_scores(fusion, train_rows)
     fused_test = _fused_scores(fusion, test_rows)
+
+    # Decorate each row with split label + fusion score so downstream notebooks can plot
+    # ROC / PR / confusion-matrix / score-distribution charts directly from scores.jsonl.
+    for r, fs in zip(train_rows, fused_train, strict=True):
+        r["split"] = "train"
+        r["fused"] = fs
+    for r, fs in zip(test_rows, fused_test, strict=True):
+        r["split"] = "test"
+        r["fused"] = fs
+    write_jsonl(str(run_dir / "scores.jsonl"), train_rows + test_rows)
 
     auroc_train = _aurocs(train_rows, fused_train)
     auroc_test, auroc_by_op_test = _aurocs_with_breakdown(test_rows, fused_test)
@@ -161,12 +170,18 @@ def run_cross_dataset_benchmark(
     train_rows = score_records(pset_train)
     test_rows = score_records(pset_test)
 
-    write_jsonl(str(run_dir / "scores_train.jsonl"), train_rows)
-    write_jsonl(str(run_dir / "scores_test.jsonl"), test_rows)
-
     fusion = _fit_fusion(train_rows)
     fused_train = _fused_scores(fusion, train_rows)
     fused_test = _fused_scores(fusion, test_rows)
+
+    for r, fs in zip(train_rows, fused_train, strict=True):
+        r["split"] = "train"
+        r["fused"] = fs
+    for r, fs in zip(test_rows, fused_test, strict=True):
+        r["split"] = "test"
+        r["fused"] = fs
+    write_jsonl(str(run_dir / "scores_train.jsonl"), train_rows)
+    write_jsonl(str(run_dir / "scores_test.jsonl"), test_rows)
 
     auroc_train = _aurocs(train_rows, fused_train)
     auroc_test, auroc_by_op_test = _aurocs_with_breakdown(test_rows, fused_test)
