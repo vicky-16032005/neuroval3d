@@ -56,8 +56,8 @@ def main() -> int:
             f.write(f"\n\nrun_id: `{r.run_id}` · out_dir: `{r.out_dir}`\n")
 
     print(f"\nWrote {out_path}")
-    print(f"  TextBraTS → RadGenome: fusion test AUROC = {r1.auroc_overall.get('fusion', float('nan')):.4f}")
-    print(f"  RadGenome → TextBraTS: fusion test AUROC = {r2.auroc_overall.get('fusion', float('nan')):.4f}")
+    print(f"  TextBraTS -> RadGenome: fusion test AUROC = {r1.auroc_overall.get('fusion', float('nan')):.4f}")
+    print(f"  RadGenome -> TextBraTS: fusion test AUROC = {r2.auroc_overall.get('fusion', float('nan')):.4f}")
     return 0
 
 
