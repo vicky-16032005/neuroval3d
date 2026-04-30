@@ -463,3 +463,24 @@ This is the most direct possible demonstration of the paper's central thesis: **
 - `phase2_full_summary.png` — loss curves + per-axis bar chart
 - Kaggle public notebook: https://www.kaggle.com/code/vikneshwaran16032005/minor-project1 (or follow-up notebook)
 
+---
+
+## 2026-04-30 14:54 (Kaggle T4 ×2) — Phase 1 notebook reproducibility confirmed
+
+User ran `notebooks/kaggle_phase2.ipynb` (validator-only) end-to-end. All 8 visualisations rendered. Headline numbers match the local CPU run to ±0.001 across the board.
+
+| Metric | Local CPU | Kaggle T4 | Δ |
+|--------|----------:|----------:|---:|
+| TextBraTS fusion **test** AUROC | 0.9961 | **0.9962** | +0.0001 |
+| TextBraTS fusion train AUROC | 0.9990 | 0.9990 | 0 |
+| RadGenome fusion **test** AUROC | 0.9715 | **0.9714** | −0.0001 |
+| RadGenome fusion train AUROC | 0.9699 | 0.9698 | −0.0001 |
+
+Train-test gaps essentially identical (TB +0.0028, RG −0.0016) — both well below 0.005, no overfit on either platform.
+
+**This is full cross-platform reproducibility.** Same numbers on a different machine, different OS (Linux vs Windows), different Python (3.12 vs 3.11), different PyTorch (2.10+cu128 vs 2.x CPU), different BERT device (cuda vs cpu). The validator behavior is deterministic up to FP precision.
+
+The eight rendered figures are saved under `/kaggle/working/` on the user's notebook and are paper-ready: triptych, AUROC bar chart, ROC curves, PR curves, confusion matrices, score distributions, per-op heatmap, train-vs-test.
+
+The Phase 2 (full) notebook was run separately and added the loop-closure result on real model output — see the entry above this one.
+
