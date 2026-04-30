@@ -58,9 +58,8 @@ CELLS = [
         "https://www.kaggle.com/datasets/awsaf49/brats20-dataset-training-validation\n"
     ),
     code(
-        "# === EDIT THIS LINE ONCE ===\n"
-        "GITHUB_URL = \"https://github.com/YOUR_USERNAME/neuroval3d.git\"  # <-- replace before Run All\n"
-        "# ===========================\n"
+        "# Project lives at vicky-16032005/neuroval3d (set 2026-04-30)\n"
+        "GITHUB_URL = \"https://github.com/vicky-16032005/neuroval3d.git\"\n"
         "\n"
         "import os, subprocess, sys\n"
         "PROJECT_DIR = \"/kaggle/working/neuroval3d\"\n"
