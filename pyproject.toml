@@ -1,0 +1,87 @@
+[project]
+name = "neuroval3d"
+version = "0.0.1"
+description = "NeuroVal-3D: A brain-MRI-specific validation framework for volumetric radiology report generation"
+authors = [
+    { name = "Naveen Rajdev" },
+    { name = "Pooja P" },
+    { name = "Vikneshwaran Marimuthu", email = "vikneshwaranmarimuthu@rioaconsulting.com" },
+    { name = "Vaishnavi Pagad" },
+]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10,<3.13"
+keywords = ["medical-imaging", "brain-mri", "radiology-report-generation", "hallucination-detection", "vasari"]
+
+dependencies = [
+    "numpy>=1.26,<2.3",
+    "scipy>=1.12",
+    "pandas>=2.2",
+    "torch>=2.2",
+    "nibabel>=5.2",
+    "SimpleITK>=2.3",
+    "monai>=1.3",
+    "transformers>=4.40",
+    "scikit-learn>=1.4",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "rich>=13.7",
+    "tqdm>=4.66",
+    "matplotlib>=3.8",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+    "ipykernel>=6.29",
+    "jupyter>=1.0",
+    "nbformat>=5.10",
+    "nbconvert>=7.16",
+]
+eval = [
+    "bert-score>=0.3.13",
+    "rouge-score>=0.1.2",
+    "sacrebleu>=2.4",
+]
+nlp = [
+    "spacy>=3.7",
+]
+rag = [
+    "faiss-cpu>=1.8",
+    "sentence-transformers>=3.0",
+]
+
+[project.scripts]
+neuroval3d = "neuroval3d.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/neuroval3d"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "ipykernel>=6.29",
+    "jupyter>=1.0",
+    "nbformat>=5.10",
+]

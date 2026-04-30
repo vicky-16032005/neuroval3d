@@ -1,0 +1,21 @@
+# Stage 5 — the validator (the contribution)
+semantic:
+  model_name: "emilyalsentzer/Bio_ClinicalBERT"
+  fallback_model: "sentence-transformers/all-MiniLM-L6-v2"
+  max_length: 512
+  pooling: "mean"
+  device: "cpu"
+  use_hash_fallback: true
+
+lexical:
+  ngram_range: [1, 3]
+  use_idf: true
+  sublinear_tf: true
+
+structural:
+  feature_subset: null              # null = all VASARI features
+
+fusion:
+  threshold: 0.5
+  weights: [0.5, 0.3, 0.2]
+  use_logistic: true

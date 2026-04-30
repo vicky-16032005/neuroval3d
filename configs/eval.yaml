@@ -1,0 +1,27 @@
+# Stage 8 — perturbation benchmark
+benchmark:
+  use_synthetic: true
+  n_samples: 120
+  n_per_report: 4
+  seed: 7
+  ops:
+    - laterality
+    - lesion_type
+    - size
+    - negation
+    - region
+    - vasari_flip
+    - count
+    - modality
+  out_dir: "outputs/results"
+
+baselines:
+  ratescore: true
+  bertscore: true
+  f1_radgraph: false                # requires extra weights; enable in Phase 4
+  green: false                      # requires LLM access; enable in Phase 4
+
+nlg:
+  bleu: true
+  rouge: true
+  meteor: true

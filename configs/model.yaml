@@ -1,0 +1,23 @@
+# Stages 2-4 — encoder / projector / decoder
+encoder:
+  backbone: "swin_unetr"            # swin_unetr | brainsegfounder | vit3d_inflated | dummy
+  in_channels: 4
+  feature_size: 48
+  image_size: [128, 128, 128]
+  use_checkpoint: true
+  pretrained_weights: null
+
+projector:
+  type: "mlp"
+  in_dim: 48
+  out_dim: 768
+  n_tokens: 32
+  lora_rank: 16
+
+decoder:
+  backbone: "bart-base"             # bart-base | t5-small | llama-3.2-3b-qlora | m3d-lamed
+  max_new_tokens: 256
+  num_beams: 4
+  no_repeat_ngram_size: 3
+  do_sample: false
+  device: "cpu"

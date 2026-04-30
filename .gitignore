@@ -1,0 +1,83 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.eggs/
+*.egg-info/
+*.egg
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Jupyter
+.ipynb_checkpoints
+*-checkpoint.ipynb
+
+# Data — never commit
+data/raw/**
+data/processed/**
+data/synthetic/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/synthetic/.gitkeep
+
+# Outputs — never commit checkpoints/logs
+outputs/checkpoints/**
+outputs/logs/**
+outputs/results/**
+!outputs/checkpoints/.gitkeep
+!outputs/logs/.gitkeep
+!outputs/results/.gitkeep
+
+# Model weights / large binaries
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.onnx
+*.h5
+*.npz
+*.npy
+*.nii
+*.nii.gz
+*.dcm
+
+# Secrets
+.env
+.env.*
+*.key
+*.token
+secrets.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build
+dist/
+build/
+*.whl
+
+# Logs
+*.log
+wandb/
+mlruns/
+
+# Project-specific (tracked review materials)
+# (we DO commit research on ps v1.pdf, m.jpeg, aiml_review_final.pptx, the WhatsApp image)

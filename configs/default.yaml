@@ -1,0 +1,13 @@
+# NeuroVal-3D — top-level config (Hydra-style)
+# Stage configs are nested below; override with `+stage.foo=bar` on the CLI.
+
+run:
+  seed: 7
+  out_dir: outputs
+  log_level: INFO
+
+defaults:
+  - data: brats
+  - model: bart_base
+  - validator: default
+  - eval: bench_synth
