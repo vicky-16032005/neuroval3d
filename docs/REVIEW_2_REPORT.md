@@ -82,6 +82,16 @@ The radiology market is structurally short of human radiologists. AI report gene
 
 # PART A — System / Algorithm Design
 
+*This part addresses **Review Parameter #1 — System / Algorithm Design**: a clear explanation of the overall system architecture and the proposed methodology.*
+
+**What this part covers:**
+
+- **Section 2** — Domain primer on brain MRI and report generation.
+- **Section 3** — Literature survey of SOTA generators and the open validation gap that motivates this project.
+- **Section 4** — The proposed methodology: the 8-stage pipeline, the seven specialist validator algorithms, the logistic fusion model, the perturbation benchmark, the formal mathematical formulation, and the dataset strategy.
+
+By the end of Part A, the reader will have a complete picture of *what* we are building and *why* the design is the way it is — independent of any code.
+
 # 2. Background — Brain MRI Report Generation
 
 A typical brain MRI study consists of four co-registered 3D volumes — **T1**, **T1-contrast (T1ce)**, **T2**, **FLAIR** — each a stack of axial slices around 240×240×155 voxels. A radiologist reviewing this 4D tensor produces a structured natural-language report:
@@ -244,6 +254,19 @@ We use only public, openly-licensed sources — no Synapse / CBICA approval bott
 ---
 
 # PART B — Implementation of Modules
+
+*This part addresses **Review Parameter #2 — Implementation of Modules**: a demonstration of the completed and working modules.*
+
+**What this part covers:**
+
+- **Section 5** — The full tech stack (Python, PyTorch, MONAI, scikit-learn, HuggingFace Transformers, etc.) with the role each library plays.
+- **Section 6** — The complete repository layout, mapping each `src/neuroval3d/` subpackage to a pipeline stage.
+- **Section 7** — Phase 0 bootstrap: how the 36-module scaffold was built and committed.
+- **Section 8** — Phase 1 validator implementation: module-by-module LOC counts, test coverage, the 5-round iterative build, and the `neuroval3d` CLI.
+- **Section 9** — Phase 2 generator implementation: the 143M-parameter 3D-CNN + projector + BART model, training setup, and end-to-end training loop on Kaggle T4.
+- **Section 10** — The reproducibility infrastructure: notebooks, run logs, checkpoint ledgers, and cross-platform verification.
+
+By the end of Part B, the reader will have a complete picture of *what code exists*, *where it lives*, and *how to run it*.
 
 # 5. Tech Stack & Tools
 
@@ -447,6 +470,20 @@ The entire training loop lives in `notebooks/kaggle_phase2_full.ipynb` and is re
 ---
 
 # PART C — Module Testing and Intermediate Result Analysis
+
+*This part addresses **Review Parameter #3 — Module Testing and Intermediate Result Analysis**: testing results, validation, and analysis of outcomes.*
+
+**What this part covers:**
+
+- **Section 11** — Unit-test coverage: 36 pytest tests across 12 files, 100% pass rate.
+- **Section 12** — Phase 1 synthetic benchmark — the iterative build over five rounds, with AUROC progression from the trivial bootstrap (0.682) through the full 7-axis stack (**0.878**).
+- **Section 13** — Phase 1 real-data results on TextBraTS (held-out **0.9961**), RadGenome (held-out **0.9715**), and full cross-dataset transfer in both directions.
+- **Section 14** — The four-row paper-grade table that anchors the publication claim.
+- **Section 15** — Phase 2 loop closure: training loss curves, three real generated-report examples, validator scores on real-model output, and the headline "BERT 0.987 vs structural 0.518" finding.
+- **Section 16** — Cross-platform reproducibility: ±0.0001 across Linux GPU and Windows CPU.
+- **Section 17** — The eight paper-ready visualisation outputs.
+
+By the end of Part C, the reader will have a complete picture of *whether the system works*, *how well*, and *why we trust the numbers*.
 
 # 11. Unit Tests
 

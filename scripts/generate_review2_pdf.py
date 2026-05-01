@@ -167,7 +167,17 @@ def parse_markdown(md: str) -> list:
             i += 1
             continue
         if line.startswith("# "):
-            flow.append(PageBreak())
+            # Suppress page break if the previous flow item was an H1-only block
+            # (prevents blank "PART X" divider pages when the next H1 follows immediately)
+            prev_is_h1_only = (
+                len(flow) >= 1
+                and isinstance(flow[-1], Paragraph)
+                and getattr(flow[-1].style, "name", "") == "H1"
+            )
+            if not prev_is_h1_only:
+                flow.append(PageBreak())
+            else:
+                flow.append(Spacer(1, 0.1 * inch))
             flow.append(Paragraph(_inline(line[2:]), H1))
             i += 1
             continue
