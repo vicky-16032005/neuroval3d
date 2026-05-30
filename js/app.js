@@ -377,6 +377,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderLossChart();
   renderDiscriminationChart();
   renderDetectionChart();
-  initLiveDemo();
   initSmoothScroll();
+  // live demo + real-case pipeline flow are handled by demo.js (self-initialising)
 });
