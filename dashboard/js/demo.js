@@ -1,7 +1,12 @@
-// NeuroVal-3D Dashboard — interactive demo flow (real dataset cases + custom text).
-// Builds the full pipeline walkthrough into #demo-root:
-//   Step 1 Input MRI -> Step 2 Generated report -> Step 3 NeuroVal-3D validation -> Step 4 Comparison
-// Real-case data: DEMO_CASES (demo_cases.js). Custom mode: runAllValidators (validators.js).
+// NeuroVal-3D Dashboard — interactive demo flow.
+// Step 0: insert an input MRI (upload a dataset panel OR pick from the gallery)
+//   -> Step 1 Input  -> Step 2 Generate  -> Step 3 Validate  -> Step 4 Compare
+// Real-case data: DEMO_CASES (demo_cases.js). Custom text mode: runAllValidators (validators.js).
+//
+// NOTE ON TRANSPARENCY: a browser cannot run the 143M-param BART generator or BioClinicalBERT
+// (those need PyTorch + GPU + the trained checkpoint). So for an uploaded/selected dataset
+// subject we replay the REAL precomputed report + validation scores from the Phase 2 Kaggle run.
+// The "Try your own text" tab runs the live JS validators on any text you paste.
 
 const DEMO_AXIS_LABELS = {
   structural: "Structural (VASARI F1)",
@@ -22,11 +27,8 @@ function demoAxisBars(axes, measured) {
     const pass = v >= 0.5;
     const cls = pass ? "axis-bar-pass" : "axis-bar-fail";
     let tag = "";
-    if (measured && measured.includes(k)) {
-      tag = '<span class="demo-axis-tag tag-measured">measured</span>';
-    } else if (v === 1.0) {
-      tag = '<span class="demo-axis-tag tag-silent">silent</span>';
-    }
+    if (measured && measured.includes(k)) tag = '<span class="demo-axis-tag tag-measured">measured</span>';
+    else if (v === 1.0) tag = '<span class="demo-axis-tag tag-silent">silent</span>';
     return `
       <div class="axis-row">
         <div class="axis-name">${DEMO_AXIS_LABELS[k]}${tag}</div>
@@ -43,10 +45,13 @@ function demoVerdictPill(score) {
     : '<span class="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">FLAGGED</span>';
 }
 
-function renderRealCase(idx) {
+// ---------------- Pipeline render for one case ----------------
+
+function renderRealCase(idx, inputSrc) {
   const c = DEMO_CASES[idx];
   const correctVerdict = c.groundTruth === "correct" ? "VALID" : "FLAGGED";
   const gtIsError = c.groundTruth === "error";
+  const imgSrc = inputSrc || c.image;
 
   const validators = [
     { name: "NeuroVal-3D (fused)", score: c.fused, ours: true },
@@ -77,7 +82,7 @@ function renderRealCase(idx) {
         <div class="demo-step-head"><span class="demo-step-num">1</span> Input &mdash; 3D Brain MRI Volume</div>
         <div class="grid md:grid-cols-3 gap-4 items-center">
           <div class="md:col-span-2">
-            <img src="${c.image}" alt="${c.id} four-modality MRI" class="w-full rounded-lg border border-slate-200">
+            <img src="${imgSrc}" alt="${c.id} four-modality MRI" class="w-full rounded-lg border border-slate-200">
           </div>
           <div class="text-sm space-y-1.5">
             <div><span class="text-slate-500">Subject:</span> <span class="font-mono">${c.id}</span></div>
@@ -136,33 +141,123 @@ function renderRealCase(idx) {
           <tbody class="divide-y divide-slate-100">${compRows}</tbody>
         </table>
         <div class="mt-3 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3">${takeaway}</div>
+        <p class="text-[11px] text-slate-400 mt-2">Report + scores are the actual values from our Phase 2 Kaggle run for this subject (a browser cannot run the 143M-param GPU model live).</p>
       </div>
     </div>`;
 }
 
+// ---------------- Step 0: input picker (upload + gallery) ----------------
+
+function matchCaseByName(filename) {
+  const f = (filename || "").toLowerCase();
+  for (let i = 0; i < DEMO_CASES.length; i++) {
+    const m = DEMO_CASES[i].id.match(/(\d+)\s*$/);
+    const num = m ? m[1] : null;
+    if (num && f.includes(num)) return i;
+    if (f.includes(DEMO_CASES[i].id.toLowerCase())) return i;
+  }
+  return -1;
+}
+
 function renderRealMode(root) {
-  const chips = DEMO_CASES.map((c, i) => {
+  const gallery = DEMO_CASES.map((c, i) => {
     const err = c.groundTruth === "error";
-    return `<button class="demo-case-chip" data-idx="${i}">
-      <span class="font-mono text-xs">${c.id.replace("BraTS20_Training_", "BraTS #")}</span>
-      <span class="demo-case-tag ${err ? "tag-err" : "tag-ok"}">${err ? "hallucinated" : "faithful"}</span>
+    return `<button class="demo-thumb" data-idx="${i}">
+      <img src="${c.image}" alt="${c.id}">
+      <div class="demo-thumb-meta">
+        <span class="font-mono">${c.id.replace("BraTS20_Training_", "#")}</span>
+        <span class="demo-case-tag ${err ? "tag-err" : "tag-ok"}">${err ? "hallucinated" : "faithful"}</span>
+      </div>
     </button>`;
   }).join("");
 
   root.innerHTML = `
-    <p class="text-center text-sm text-slate-500 mb-4">Choose a held-out case &mdash; two faithful generations, two with a hallucinated tumour side:</p>
-    <div class="flex flex-wrap gap-2 justify-center mb-6">${chips}</div>
-    <div id="demo-case-view"></div>`;
+    <div class="demo-step demo-input-card">
+      <div class="demo-step-head"><span class="demo-step-num">0</span> Insert an input MRI (from the dataset)</div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <label class="demo-upload" id="demo-drop">
+          <input type="file" id="demo-file" accept="image/*" style="display:none">
+          <div class="demo-upload-inner">
+            <div class="demo-upload-icon">&#8682;</div>
+            <div class="font-semibold text-slate-700">Upload a BraTS MRI panel</div>
+            <div class="text-xs text-slate-400 mt-1">drag &amp; drop or click &mdash; e.g. <span class="font-mono">BraTS20_Training_096.png</span></div>
+            <div class="text-[11px] text-slate-400 mt-2">Files are in <span class="font-mono">dashboard/assets/</span></div>
+          </div>
+        </label>
+        <div>
+          <div class="text-sm font-semibold text-slate-600 mb-2">&hellip;or click a dataset case:</div>
+          <div class="demo-gallery">${gallery}</div>
+        </div>
+      </div>
+      <div id="demo-upload-msg" class="text-sm mt-3"></div>
+    </div>
+    <div id="demo-pipeline" class="mt-6"></div>`;
 
-  const chipEls = root.querySelectorAll(".demo-case-chip");
-  const view = root.querySelector("#demo-case-view");
-  function select(i) {
-    chipEls.forEach((el, j) => el.classList.toggle("active", j === i));
-    view.innerHTML = renderRealCase(i);
+  const pipeline = root.querySelector("#demo-pipeline");
+  const msg = root.querySelector("#demo-upload-msg");
+  const fileInput = root.querySelector("#demo-file");
+  const drop = root.querySelector("#demo-drop");
+
+  function runFlow(idx, inputSrc) {
+    const c = DEMO_CASES[idx];
+    msg.innerHTML = `<span class="text-teal-700">Loaded <b>${c.id}</b>. Running pipeline&hellip;</span>`;
+    // Stage 1: show input + processing spinner
+    pipeline.innerHTML = `
+      <div class="demo-step">
+        <div class="demo-step-head"><span class="demo-step-num">1</span> Input received</div>
+        <img src="${inputSrc || c.image}" class="w-full max-w-2xl mx-auto rounded-lg border border-slate-200">
+      </div>
+      <div class="demo-processing" id="demo-proc">
+        <div class="demo-spinner"></div>
+        <div id="demo-proc-text">Encoding MRI volume&hellip;</div>
+      </div>`;
+    pipeline.scrollIntoView({ behavior: "smooth", block: "start" });
+    const txt = pipeline.querySelector("#demo-proc-text");
+    const steps = ["Encoding MRI volume…", "Generating report (BART)…", "Scoring 7 validator axes…", "Comparing with baselines…"];
+    let si = 0;
+    const tick = setInterval(() => { si++; if (txt && steps[si]) txt.textContent = steps[si]; }, 420);
+    setTimeout(() => {
+      clearInterval(tick);
+      pipeline.innerHTML = renderRealCase(idx, inputSrc);
+      pipeline.scrollIntoView({ behavior: "smooth", block: "start" });
+      msg.innerHTML = `<span class="text-emerald-700">Done &mdash; pipeline complete for <b>${c.id}</b>.</span>`;
+    }, 1900);
   }
-  chipEls.forEach((el) => el.addEventListener("click", () => select(parseInt(el.dataset.idx))));
-  select(0);
+
+  root.querySelectorAll(".demo-thumb").forEach((el) =>
+    el.addEventListener("click", () => runFlow(parseInt(el.dataset.idx))));
+
+  function handleFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const idx = matchCaseByName(file.name);
+      if (idx >= 0) {
+        runFlow(idx, e.target.result);
+      } else {
+        msg.innerHTML = `<span class="text-amber-600">We have precomputed pipeline results for subjects 081, 094, 096 and 098. ` +
+          `Your file "<b>${file.name}</b>" wasn't recognised &mdash; upload one of those panels (in <span class="font-mono">dashboard/assets/</span>) or click a case above.</span>`;
+        pipeline.innerHTML = `
+          <div class="demo-step">
+            <div class="demo-step-head"><span class="demo-step-num">1</span> Your uploaded image</div>
+            <img src="${e.target.result}" class="w-full max-w-2xl mx-auto rounded-lg border border-slate-200">
+            <p class="text-sm text-slate-500 mt-3 text-center">Not a recognised held-out subject &mdash; pick one of the dataset cases above to run the full generate &rarr; validate flow.</p>
+          </div>`;
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+  ["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("dragging"); }));
+  ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("dragging"); }));
+  drop.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+
+  // auto-run the first case so the section is never empty
+  runFlow(0);
 }
+
+// ---------------- Custom-text mode (live JS validators) ----------------
 
 function renderCustomMode(root) {
   const presetOpts = PRESET_EXAMPLES.map((p, i) => `<option value="${i}">${p.name}</option>`).join("");
@@ -231,12 +326,14 @@ function renderCustomMode(root) {
   run();
 }
 
+// ---------------- Boot ----------------
+
 function initRealDemo() {
   const host = document.getElementById("demo-root");
   if (!host) return;
   host.innerHTML = `
     <div class="flex gap-2 justify-center mb-8">
-      <button class="demo-mode-btn active" data-mode="real">Real dataset cases</button>
+      <button class="demo-mode-btn active" data-mode="real">Insert dataset image</button>
       <button class="demo-mode-btn" data-mode="custom">Try your own text</button>
     </div>
     <div id="demo-real"></div>
