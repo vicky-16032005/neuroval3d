@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NeuroVal-3D — Hallucination Validator for 3D Brain MRI Reports</title>
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/demo.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -342,63 +343,12 @@
   <section id="demo" class="py-20 px-6 bg-gradient-to-b from-slate-50 to-teal-50">
     <div class="max-w-7xl mx-auto">
       <div class="text-center mb-12">
-        <div class="section-eyebrow">Live Demo</div>
-        <h2 class="section-title">Try the Validator Yourself</h2>
-        <p class="section-sub">Paste a generated and reference report &mdash; see all 7 axes score live.</p>
+        <div class="section-eyebrow">Live Demo &mdash; Full Pipeline</div>
+        <h2 class="section-title">See the Pipeline Run on Real Cases</h2>
+        <p class="section-sub">Pick a held-out BraTS&nbsp;2020 case and follow it end to end: input MRI &rarr; generated report &rarr; NeuroVal-3D validation &rarr; comparison with existing validators.</p>
       </div>
 
-      <div class="bg-white rounded-2xl shadow-xl p-8 max-w-6xl mx-auto">
-        <!-- Preset selector -->
-        <div class="mb-6">
-          <label class="text-sm font-semibold text-slate-700 mr-3">Load preset example:</label>
-          <select id="preset-select" class="rounded-lg border-slate-300 text-sm px-3 py-2 bg-slate-50 border">
-            <option value="">— Custom input —</option>
-            <option value="0">Clean: matching reports</option>
-            <option value="1">Laterality flip (left ↔ right)</option>
-            <option value="2">Region swap (frontal ↔ temporal)</option>
-            <option value="3">Negation flip (no ↔ marked)</option>
-            <option value="4">Size error (3.5cm → 1.0cm)</option>
-            <option value="5">Modality confusion (T1 ↔ T2)</option>
-            <option value="6">Lesion-type swap (glioma → meningioma)</option>
-          </select>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-              Reference report <span class="text-emerald-600">(ground truth)</span>
-            </label>
-            <textarea id="ref-input" rows="7"
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="The radiologist's report..."></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-2">
-              Generated report <span class="text-red-600">(AI output to validate)</span>
-            </label>
-            <textarea id="gen-input" rows="7"
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              placeholder="The AI-generated report..."></textarea>
-          </div>
-        </div>
-
-        <button id="validate-btn"
-          class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold py-3 rounded-lg transition transform hover:scale-[1.01] shadow-md">
-          Validate &rarr;
-        </button>
-
-        <!-- Results panel -->
-        <div id="results-panel" class="mt-8 hidden">
-          <!-- Verdict banner -->
-          <div id="verdict-banner" class="mb-6 p-6 rounded-xl flex items-center justify-between"></div>
-
-          <!-- Per-axis score bars -->
-          <div>
-            <h3 class="font-bold text-slate-800 mb-4">Per-Axis Scores</h3>
-            <div id="axis-results" class="space-y-3"></div>
-          </div>
-        </div>
-      </div>
+      <div id="demo-root" class="max-w-6xl mx-auto"></div>
     </div>
   </section>
 
@@ -497,7 +447,9 @@
   </footer>
 
   <script src="js/data.js"></script>
+  <script src="js/demo_cases.js"></script>
   <script src="js/validators.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/demo.js"></script>
 </body>
 </html>
