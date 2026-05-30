@@ -19,6 +19,9 @@ const DEMO_AXIS_LABELS = {
 };
 const DEMO_AXIS_ORDER = ["structural", "lexical", "semantic", "numeric", "modality", "negation", "lesion_type"];
 
+// Set true when the local Python backend (app/serve.py) is reachable -> live real validation.
+let DEMO_BACKEND = false;
+
 function demoAxisBars(axes, measured) {
   return DEMO_AXIS_ORDER.map((k) => {
     const v = axes[k];
@@ -47,16 +50,25 @@ function demoVerdictPill(score) {
 
 // ---------------- Pipeline render for one case ----------------
 
-function renderRealCase(idx, inputSrc) {
+function renderRealCase(idx, inputSrc, live) {
   const c = DEMO_CASES[idx];
   const correctVerdict = c.groundTruth === "correct" ? "VALID" : "FLAGGED";
   const gtIsError = c.groundTruth === "error";
   const imgSrc = inputSrc || c.image;
 
+  // Prefer live backend scores when present; otherwise use the recorded Phase 2 values.
+  const axes = live ? live.axes : c.axes;
+  const fused = live ? live.fused : c.fused;
+  const fusedVerdict = live ? live.verdict : c.fusedVerdict;
+  const baselines = live ? live.baselines : c.baselines;
+  const liveBadge = live
+    ? `<span class="ml-2 px-2 py-0.5 rounded-full bg-teal-600 text-white text-[10px] font-bold align-middle">LIVE · real Python validators${live.bert_live ? " + BioClinicalBERT" : ""}</span>`
+    : "";
+
   const validators = [
-    { name: "NeuroVal-3D (fused)", score: c.fused, ours: true },
-    { name: "BioClinicalBERT cosine", score: c.baselines.bioclinicalbert, ours: false },
-    { name: "RaTEScore-lite", score: c.baselines.ratescore, ours: false },
+    { name: "NeuroVal-3D (fused)", score: fused, ours: true },
+    { name: "BioClinicalBERT cosine", score: baselines.bioclinicalbert, ours: false },
+    { name: "RaTEScore-lite", score: baselines.ratescore, ours: false },
   ];
   const compRows = validators.map((v) => {
     const verdict = v.score >= 0.5 ? "VALID" : "FLAGGED";
@@ -71,8 +83,8 @@ function renderRealCase(idx, inputSrc) {
   }).join("");
 
   const takeaway = gtIsError
-    ? `BioClinicalBERT scored this hallucinated report <b>${c.baselines.bioclinicalbert.toFixed(2)}</b> and called it VALID &mdash; it missed the laterality flip entirely. NeuroVal-3D flagged it (fused ${c.fused.toFixed(2)}), driven by the structural axis at ${c.axes.structural.toFixed(2)}.`
-    : `A faithful generation. NeuroVal-3D (${c.fused.toFixed(2)}) and BioClinicalBERT (${c.baselines.bioclinicalbert.toFixed(2)}) both correctly accept it. RaTEScore-lite flags it anyway &mdash; it tends to reject almost everything.`;
+    ? `BioClinicalBERT scored this hallucinated report <b>${baselines.bioclinicalbert.toFixed(2)}</b> and called it VALID &mdash; it missed the laterality flip entirely. NeuroVal-3D flagged it (fused ${fused.toFixed(2)}), driven by the structural axis at ${axes.structural.toFixed(2)}.`
+    : `A faithful generation. NeuroVal-3D (${fused.toFixed(2)}) and BioClinicalBERT (${baselines.bioclinicalbert.toFixed(2)}) both correctly accept it. RaTEScore-lite flags it anyway &mdash; it tends to reject almost everything.`;
 
   const gtColor = gtIsError ? "bg-red-500" : "bg-emerald-500";
 
@@ -116,16 +128,16 @@ function renderRealCase(idx, inputSrc) {
       <div class="demo-arrow">&#9660;&nbsp; NeuroVal-3D scores the (generated, reference) pair on 7 axes</div>
 
       <div class="demo-step">
-        <div class="demo-step-head"><span class="demo-step-num">3</span> NeuroVal-3D Validation</div>
-        <div class="space-y-2 mb-4">${demoAxisBars(c.axes, ["structural", "lexical", "semantic"])}</div>
-        <div class="flex items-center justify-between p-4 rounded-xl ${c.fusedVerdict === "VALID" ? "verdict-pass" : "verdict-fail"}">
+        <div class="demo-step-head"><span class="demo-step-num">3</span> NeuroVal-3D Validation${liveBadge}</div>
+        <div class="space-y-2 mb-4">${demoAxisBars(axes, ["structural", "lexical", "semantic"])}</div>
+        <div class="flex items-center justify-between p-4 rounded-xl ${fusedVerdict === "VALID" ? "verdict-pass" : "verdict-fail"}">
           <div>
-            <div class="text-xs font-semibold uppercase ${c.fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">Fused verdict (logistic regression over 7 axes)</div>
-            <div class="text-2xl font-extrabold ${c.fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">${c.fusedVerdict}</div>
+            <div class="text-xs font-semibold uppercase ${fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">Fused verdict (logistic regression over 7 axes)</div>
+            <div class="text-2xl font-extrabold ${fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">${fusedVerdict}</div>
           </div>
           <div class="text-right">
-            <div class="font-mono text-2xl font-bold ${c.fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">${c.fused.toFixed(2)}</div>
-            <div class="text-xs ${c.fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"} opacity-70">P(valid)</div>
+            <div class="font-mono text-2xl font-bold ${fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"}">${fused.toFixed(2)}</div>
+            <div class="text-xs ${fusedVerdict === "VALID" ? "verdict-text-pass" : "verdict-text-fail"} opacity-70">P(valid)</div>
           </div>
         </div>
       </div>
@@ -141,7 +153,9 @@ function renderRealCase(idx, inputSrc) {
           <tbody class="divide-y divide-slate-100">${compRows}</tbody>
         </table>
         <div class="mt-3 text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3">${takeaway}</div>
-        <p class="text-[11px] text-slate-400 mt-2">Report + scores are the actual values from our Phase 2 Kaggle run for this subject (a browser cannot run the 143M-param GPU model live).</p>
+        <p class="text-[11px] text-slate-400 mt-2">${live
+          ? "Validator scores computed live by the real Python validators on this machine. The generated report is the recorded Phase 2 output (the 143M-param generator runs on GPU, not per-request)."
+          : "Report + scores are the actual recorded values from our Phase 2 Kaggle run for this subject (a browser cannot run the GPU model or BioClinicalBERT live — start the local backend for live validation)."}</p>
       </div>
     </div>`;
 }
@@ -216,12 +230,23 @@ function renderRealMode(root) {
     const steps = ["Encoding MRI volume…", "Generating report (BART)…", "Scoring 7 validator axes…", "Comparing with baselines…"];
     let si = 0;
     const tick = setInterval(() => { si++; if (txt && steps[si]) txt.textContent = steps[si]; }, 420);
-    setTimeout(() => {
+    const finish = (live) => {
       clearInterval(tick);
-      pipeline.innerHTML = renderRealCase(idx, inputSrc);
+      pipeline.innerHTML = renderRealCase(idx, inputSrc, live);
       pipeline.scrollIntoView({ behavior: "smooth", block: "start" });
-      msg.innerHTML = `<span class="text-emerald-700">Done &mdash; pipeline complete for <b>${c.id}</b>.</span>`;
-    }, 1900);
+      msg.innerHTML = `<span class="text-emerald-700">Done &mdash; pipeline complete for <b>${c.id}</b>${live ? " &middot; <b>live validation</b>" : ""}.</span>`;
+    };
+    if (DEMO_BACKEND) {
+      fetch("api/validate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ generated: c.generated, reference: c.reference }),
+      })
+        .then((r) => r.json())
+        .then((live) => setTimeout(() => finish(live && live.axes ? live : null), 500))
+        .catch(() => setTimeout(() => finish(null), 500));
+    } else {
+      setTimeout(() => finish(null), 1900);
+    }
   }
 
   root.querySelectorAll(".demo-thumb").forEach((el) =>
@@ -307,21 +332,35 @@ function renderCustomMode(root) {
   ref.value = PRESET_EXAMPLES[1].ref;
   gen.value = PRESET_EXAMPLES[1].gen;
 
-  function run() {
-    if (!ref.value.trim() || !gen.value.trim()) { alert("Paste both a reference and a generated report."); return; }
-    const s = runAllValidators(gen.value, ref.value);
+  function paint(s, fused, isLive) {
     results.classList.remove("hidden");
-    const valid = s.fused >= 0.5;
+    const valid = fused >= 0.5;
     const banner = root.querySelector("#c-verdict");
     banner.className = "mb-5 p-5 rounded-xl flex items-center justify-between " + (valid ? "verdict-pass" : "verdict-fail");
     banner.innerHTML = `
-      <div><div class="text-xs font-semibold uppercase ${valid ? "verdict-text-pass" : "verdict-text-fail"}">Fused verdict</div>
+      <div><div class="text-xs font-semibold uppercase ${valid ? "verdict-text-pass" : "verdict-text-fail"}">Fused verdict${isLive ? ' · <span class="text-teal-700">LIVE</span>' : ""}</div>
         <div class="text-2xl font-extrabold ${valid ? "verdict-text-pass" : "verdict-text-fail"}">${valid ? "VALID" : "FLAGGED"}</div></div>
-      <div class="font-mono text-2xl font-bold ${valid ? "verdict-text-pass" : "verdict-text-fail"}">${s.fused.toFixed(2)}</div>`;
-    root.querySelector("#c-axes").innerHTML = demoAxisBars({
-      structural: s.structural, lexical: s.lexical, semantic: s.semantic,
-      numeric: s.numeric, modality: s.modality, negation: s.negation, lesion_type: s.lesion_type,
-    });
+      <div class="font-mono text-2xl font-bold ${valid ? "verdict-text-pass" : "verdict-text-fail"}">${fused.toFixed(2)}</div>`;
+    root.querySelector("#c-axes").innerHTML = demoAxisBars(s);
+  }
+
+  function run() {
+    if (!ref.value.trim() || !gen.value.trim()) { alert("Paste both a reference and a generated report."); return; }
+    if (DEMO_BACKEND) {
+      fetch("api/validate", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ generated: gen.value, reference: ref.value }),
+      })
+        .then((r) => r.json())
+        .then((live) => {
+          if (live && live.axes) paint(live.axes, live.fused, true);
+          else { const s = runAllValidators(gen.value, ref.value); paint(s, s.fused, false); }
+        })
+        .catch(() => { const s = runAllValidators(gen.value, ref.value); paint(s, s.fused, false); });
+    } else {
+      const s = runAllValidators(gen.value, ref.value);
+      paint(s, s.fused, false);
+    }
   }
   run();
 }
@@ -332,6 +371,7 @@ function initRealDemo() {
   const host = document.getElementById("demo-root");
   if (!host) return;
   host.innerHTML = `
+    <div id="demo-backend-status" class="text-center text-xs mb-3"></div>
     <div class="flex gap-2 justify-center mb-8">
       <button class="demo-mode-btn active" data-mode="real">Insert dataset image</button>
       <button class="demo-mode-btn" data-mode="custom">Try your own text</button>
@@ -341,10 +381,9 @@ function initRealDemo() {
 
   const realPane = host.querySelector("#demo-real");
   const customPane = host.querySelector("#demo-custom");
+  const status = host.querySelector("#demo-backend-status");
   const btns = host.querySelectorAll(".demo-mode-btn");
   let customBuilt = false;
-
-  renderRealMode(realPane);
 
   btns.forEach((b) => b.addEventListener("click", () => {
     btns.forEach((x) => x.classList.toggle("active", x === b));
@@ -353,6 +392,17 @@ function initRealDemo() {
     customPane.classList.toggle("hidden", real);
     if (!real && !customBuilt) { renderCustomMode(customPane); customBuilt = true; }
   }));
+
+  // Detect the local Python backend; render once we know (or after 1.5s).
+  let rendered = false;
+  const go = () => { if (rendered) return; rendered = true;
+    status.innerHTML = DEMO_BACKEND
+      ? '<span class="px-3 py-1 rounded-full bg-teal-100 text-teal-800 font-semibold">● Live Python backend connected — validation runs the real validators</span>'
+      : '<span class="px-3 py-1 rounded-full bg-slate-100 text-slate-500">Static mode — showing recorded Phase 2 results. Run <span class="font-mono">app/serve.py</span> for live validation.</span>';
+    renderRealMode(realPane);
+  };
+  fetch("api/health").then((r) => r.json()).then((j) => { DEMO_BACKEND = !!(j && j.ok); go(); }).catch(go);
+  setTimeout(go, 1500);
 }
 
 if (document.readyState === "loading") {
